@@ -2,8 +2,8 @@
  * This library includes software components derived from the following projects:
  * [ChatGPTApp] (https://github.com/scriptit-fr/ChatGPTApp)
  * [Google AI JavaScript SDK] (https://github.com/google/generative-ai-js/)
- * 
- * These components are licensed under the Apache License 2.0. 
+ *
+ * These components are licensed under the Apache License 2.0.
  * A copy of the license can be found in the LICENSE file.
  */
 
@@ -28,13 +28,12 @@
  * CoreFunctions for GenerativeModel and Chat.
  */
 class _CoreFunctions {
-  constructor() {
-  }
+  constructor() {}
 
   _countTokens(auth, model, params, singleRequestOptions) {
     // modify the request if vertex ai
     if (!auth.apiKey) {
-      params = params.generateContentRequest
+      params = params.generateContentRequest;
     }
     const response = this._makeModelRequest(
       model,
@@ -43,60 +42,52 @@ class _CoreFunctions {
       false,
       params,
       singleRequestOptions
-    )
-    return response
-  };
+    );
+    return response;
+  }
 
   _generateContent(auth, model, params, requestOptions) {
-
     const response = this._makeModelRequest(
       model,
       Task.GENERATE_CONTENT,
       auth,
-    /* stream */ false,
+      /* stream */ false,
       params,
       requestOptions
-    )
-    const responseJson = response
-    const enhancedResponse = this._addHelpers(responseJson)
+    );
+    const responseJson = response;
+    const enhancedResponse = this._addHelpers(responseJson);
     return {
-      response: enhancedResponse
-    }
-  };
+      response: enhancedResponse,
+    };
+  }
 
   _getHeaders(url) {
     const headers = {};
     if (url.apiKey) {
-      headers['X-Goog-Api-Key'] = url.apiKey;
-    } else if (url._auth?.type === 'service_account') {
+      headers["X-Goog-Api-Key"] = url.apiKey;
+    } else if (url._auth?.type === "service_account") {
       const credentials = this._credentialsForVertexAI(url._auth);
-      headers['Authorization'] = `Bearer ${credentials.accessToken}`
+      headers["Authorization"] = `Bearer ${credentials.accessToken}`;
     } else {
-      headers['Authorization'] = `Bearer ${ScriptApp.getOAuthToken()}`;
+      headers["Authorization"] = `Bearer ${ScriptApp.getOAuthToken()}`;
     }
-    return headers
+    return headers;
   }
 
-  _constructModelRequest(
-    model,
-    task,
-    auth,
-    stream,
-    body,
-    requestOptions
-  ) {
+  _constructModelRequest(model, task, auth, stream, body, requestOptions) {
     const url = new RequestUrl(model, task, auth, stream, requestOptions);
 
     return {
       url: url.toString(),
       fetchOptions: {
         ...this._buildFetchOptions(requestOptions),
-        'method': "POST",
-        'contentType': 'application/json',
-        'headers': this._getHeaders(url),
-        'payload': this._removeEmptyParams(body)
-      }
-    }
+        method: "POST",
+        contentType: "application/json",
+        headers: this._getHeaders(url),
+        payload: this._removeEmptyParams(body),
+      },
+    };
   }
 
   _makeModelRequest(
@@ -116,28 +107,27 @@ class _CoreFunctions {
       stream,
       body,
       requestOptions
-    )
-    return makeRequest_(url, fetchOptions, fetchFn)
+    );
+    return makeRequest_(url, fetchOptions, fetchFn);
   }
 
   _buildFetchOptions(requestOptions) {
-
-    return requestOptions
+    return requestOptions;
   }
 
   // @See https://github.com/googleworkspace/slides-advisor-add-on/blob/main/src/ai.js
   _credentialsForVertexAI(auth) {
     try {
       const service = OAuth2.createService("Vertex")
-        .setTokenUrl('https://oauth2.googleapis.com/token')
+        .setTokenUrl("https://oauth2.googleapis.com/token")
         .setPrivateKey(auth.private_key)
         .setIssuer(auth.client_email)
         .setPropertyStore(PropertiesService.getScriptProperties())
         .setCache(CacheService.getScriptCache())
         .setScope("https://www.googleapis.com/auth/cloud-platform");
-      return { accessToken: service.getAccessToken() }
+      return { accessToken: service.getAccessToken() };
     } catch (e) {
-      console.error(e)
+      console.error(e);
     }
   }
 
@@ -146,20 +136,20 @@ class _CoreFunctions {
    */
 
   _formatGenerateContentInput(params) {
-    let formattedRequest
+    let formattedRequest;
     if (params.contents) {
-      formattedRequest = params
+      formattedRequest = params;
     } else {
       // Array or string
-      const content = this._formatNewContent(params)
-      formattedRequest = { contents: [content] }
+      const content = this._formatNewContent(params);
+      formattedRequest = { contents: [content] };
     }
     if (params.systemInstruction) {
       formattedRequest.systemInstruction = this._formatSystemInstruction(
         params.systemInstruction
-      )
+      );
     }
-    return formattedRequest
+    return formattedRequest;
   }
 
   _formatCountTokensInput(params, modelParams) {
@@ -171,33 +161,36 @@ class _CoreFunctions {
       toolConfig: modelParams?.toolConfig,
       systemInstruction: modelParams?.systemInstruction,
       cachedContent: modelParams?.cachedContent?.name,
-      contents: []
-    }
-    const containsGenerateContentRequest = params.generateContentRequest != null
+      contents: [],
+    };
+    const containsGenerateContentRequest =
+      params.generateContentRequest != null;
     if (params.contents) {
       if (containsGenerateContentRequest) {
         throw new GoogleGenerativeAIRequestInputError(
           "CountTokensRequest must have one of contents or generateContentRequest, not both."
-        )
+        );
       }
-      formattedGenerateContentRequest.contents = params.contents
+      formattedGenerateContentRequest.contents = params.contents;
     } else if (containsGenerateContentRequest) {
       formattedGenerateContentRequest = {
         ...formattedGenerateContentRequest,
-        ...params.generateContentRequest
-      }
+        ...params.generateContentRequest,
+      };
     } else {
       // Array or string
-      const content = this._formatNewContent(params)
-      formattedGenerateContentRequest.contents = [content]
+      const content = this._formatNewContent(params);
+      formattedGenerateContentRequest.contents = [content];
     }
-    return { generateContentRequest: formattedGenerateContentRequest }
+    return { generateContentRequest: formattedGenerateContentRequest };
   }
 
   _removeEmptyParams(params) {
     return JSON.stringify(
       Object.fromEntries(
-        Object.entries(params).filter(([_, v]) => v != null && (!Array.isArray(v) || v.length > 0))
+        Object.entries(params).filter(
+          ([_, v]) => v != null && (!Array.isArray(v) || v.length > 0)
+        )
       )
     );
   }
@@ -205,70 +198,70 @@ class _CoreFunctions {
   _formatNewContent(request) {
     let newParts = [];
     if (typeof request === "string") {
-      newParts = [{ text: request }]
+      newParts = [{ text: request }];
     } else {
       for (const partOrString of request) {
         if (typeof partOrString === "string") {
-          newParts.push({ text: partOrString })
+          newParts.push({ text: partOrString });
         } else {
-          newParts.push(partOrString)
+          newParts.push(partOrString);
         }
       }
     }
-    return this._assignRoleToPartsAndValidateSendMessageRequest(newParts)
+    return this._assignRoleToPartsAndValidateSendMessageRequest(newParts);
   }
 
   _formatSystemInstruction(input) {
     if (input == null) {
-      return undefined
+      return undefined;
     } else if (typeof input === "string") {
       return {
         role: "system",
-        parts: [{ text: input }]
-      }
+        parts: [{ text: input }],
+      };
     } else if (input.text) {
-      return { role: "system", parts: [input] }
+      return { role: "system", parts: [input] };
     } else if (input.parts) {
       if (!input.role) {
-        return { role: "system", parts: input.parts }
+        return { role: "system", parts: input.parts };
       } else {
-        return input
+        return input;
       }
     }
   }
 
   _assignRoleToPartsAndValidateSendMessageRequest(parts) {
-    const userContent = { role: "user", parts: [] }
-    const functionContent = { role: "function", parts: [] }
-    let hasUserContent = false
-    let hasFunctionContent = false
+    const userContent = { role: "user", parts: [] };
+    const functionContent = { role: "function", parts: [] };
+    let hasUserContent = false;
+    let hasFunctionContent = false;
     for (const part of parts) {
       if ("functionResponse" in part) {
-        functionContent.parts.push(part)
-        hasFunctionContent = true
+        functionContent.parts.push(part);
+        hasFunctionContent = true;
       } else {
-        userContent.parts.push(part)
-        hasUserContent = true
+        userContent.parts.push(part);
+        hasUserContent = true;
       }
     }
 
     if (hasUserContent && hasFunctionContent) {
       throw new GoogleGenerativeAIError(
         "Within a single message, FunctionResponse cannot be mixed with other type of part in the request for sending chat message."
-      )
+      );
     }
 
     if (!hasUserContent && !hasFunctionContent) {
       throw new GoogleGenerativeAIError(
         "No content is provided for sending chat message."
-      )
+      );
     }
 
     if (hasUserContent) {
-      return userContent
+      return userContent;
     }
 
-    return functionContent
+    return functionContent;
   }
 
   _addHelpers(response) {
@@ -277,25 +270,25 @@ class _CoreFunctions {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-            `candidates. Returning text from the first candidate only. ` +
-            `Access response.candidates directly to use the other candidates.`
-          )
+              `candidates. Returning text from the first candidate only. ` +
+              `Access response.candidates directly to use the other candidates.`
+          );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
           throw new GoogleGenerativeAIResponseError(
             `${this._formatBlockErrorMessage(response)}`,
             response
-          )
+          );
         }
-        return this._getText(response)
+        return this._getText(response);
       } else if (response.promptFeedback) {
         throw new GoogleGenerativeAIResponseError(
           `Text not available. ${this._formatBlockErrorMessage(response)}`,
           response
-        )
+        );
       }
-      return ""
-    }
+      return "";
+    };
     /**
      * TODO: remove at next major version
      */
@@ -304,108 +297,113 @@ class _CoreFunctions {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-            `candidates. Returning function calls from the first candidate only. ` +
-            `Access response.candidates directly to use the other candidates.`
-          )
+              `candidates. Returning function calls from the first candidate only. ` +
+              `Access response.candidates directly to use the other candidates.`
+          );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
           throw new GoogleGenerativeAIResponseError(
             `${this._formatBlockErrorMessage(response)}`,
             response
-          )
+          );
         }
         console.warn(
           `response.functionCall() is deprecated. ` +
-          `Use response.functionCalls() instead.`
-        )
-        return this._getFunctionCalls(response)[0]
+            `Use response.functionCalls() instead.`
+        );
+        return this._getFunctionCalls(response)[0];
       } else if (response.promptFeedback) {
         throw new GoogleGenerativeAIResponseError(
-          `Function call not available. ${this._formatBlockErrorMessage(response)}`,
+          `Function call not available. ${this._formatBlockErrorMessage(
+            response
+          )}`,
           response
-        )
+        );
       }
-      return undefined
-    }
+      return undefined;
+    };
     response.functionCalls = () => {
       if (response.candidates && response.candidates.length > 0) {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-            `candidates. Returning function calls from the first candidate only. ` +
-            `Access response.candidates directly to use the other candidates.`
-          )
+              `candidates. Returning function calls from the first candidate only. ` +
+              `Access response.candidates directly to use the other candidates.`
+          );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
           throw new GoogleGenerativeAIResponseError(
             `${this._formatBlockErrorMessage(response)}`,
             response
-          )
+          );
         }
-        return this._getFunctionCalls(response)
+        return this._getFunctionCalls(response);
       } else if (response.promptFeedback) {
         throw new GoogleGenerativeAIResponseError(
-          `Function call not available. ${this._formatBlockErrorMessage(response)}`,
+          `Function call not available. ${this._formatBlockErrorMessage(
+            response
+          )}`,
           response
-        )
+        );
       }
-      return undefined
-    }
-
+      return undefined;
+    };
 
     response.json = function () {
       if (response.candidates?.[0].content?.parts?.[0]?.text) {
-        return response.candidates[0].content.parts.map(({ text }) => JSON.parse(text));
+        return response.candidates[0].content.parts.map(({ text }) =>
+          JSON.parse(text)
+        );
       } else {
         return "";
       }
     };
-    return response
+    return response;
   }
 
   _getText(response) {
-    const textStrings = []
+    const textStrings = [];
     if (response.candidates?.[0].content?.parts) {
       for (const part of response.candidates?.[0].content?.parts) {
         if (part.text) {
-          textStrings.push(part.text)
+          textStrings.push(part.text);
         }
         if (part.executableCode) {
           textStrings.push(
             "\n```" +
-            part.executableCode.language +
-            "\n" +
-            part.executableCode.code +
-            "\n```\n"
-          )
+              part.executableCode.language +
+              "\n" +
+              part.executableCode.code +
+              "\n```\n"
+          );
         }
         if (part.codeExecutionResult) {
           textStrings.push(
             "\n```\n" + part.codeExecutionResult.output + "\n```\n"
-          )
+          );
         }
       }
     }
     if (textStrings.length > 0) {
-      return textStrings.join("")
+      return textStrings.join("");
     } else {
-      return ""
+      return "";
     }
   }
 
   _getFunctionCalls(response) {
-    const functionCalls = []
+    const functionCalls = [];
     if (response.candidates?.[0].content?.parts) {
       for (const part of response.candidates?.[0].content?.parts) {
         if (part.functionCall) {
-          functionCalls.push(part.functionCall)
+          functionCalls.push(part.functionCall);
         }
       }
     }
     if (functionCalls.length > 0) {
-      return functionCalls
+      return functionCalls;
     } else {
-      return undefined
+      return undefined;
     }
   }
 
@@ -420,43 +418,43 @@ class _CoreFunctions {
       FinishReason.PROHIBITED_CONTENT,
       FinishReason.SPII,
       FinishReason.MALFORMED_FUNCTION_CALL,
-      FinishReason.OTHER
+      FinishReason.OTHER,
     ];
     return (
       !!candidate.finishReason &&
       badFinishReasons.includes(candidate.finishReason)
-    )
+    );
   }
 
   _formatBlockErrorMessage(response) {
-    let message = ""
+    let message = "";
     if (
       (!response.candidates || response.candidates.length === 0) &&
       response.promptFeedback
     ) {
-      message += "Response was blocked"
+      message += "Response was blocked";
       if (response.promptFeedback?.blockReason) {
-        message += ` due to ${response.promptFeedback.blockReason}`
+        message += ` due to ${response.promptFeedback.blockReason}`;
       }
       if (response.promptFeedback?.blockReasonMessage) {
-        message += `: ${response.promptFeedback.blockReasonMessage}`
+        message += `: ${response.promptFeedback.blockReasonMessage}`;
       }
     } else if (response.candidates?.[0]) {
-      const firstCandidate = response.candidates[0]
+      const firstCandidate = response.candidates[0];
       if (this._hadBadFinishReason(firstCandidate)) {
-        message += `Candidate was blocked due to ${firstCandidate.finishReason}`
+        message += `Candidate was blocked due to ${firstCandidate.finishReason}`;
         if (firstCandidate.finishMessage) {
-          message += `: ${firstCandidate.finishMessage}`
+          message += `: ${firstCandidate.finishMessage}`;
         }
       }
     }
-    return message
+    return message;
   }
 }
 
 /**
  * Class representing _GoogleGenerativeAI
- * 
+ *
  * @constructor
  * @param {Object|string} options - Configuration options for the class instance.
  * @param {string} [options.apiKey] - API key for authentication.
@@ -470,9 +468,13 @@ class _CoreFunctions {
 class _GoogleGenerativeAI {
   constructor(options) {
     this._auth = {};
-    if (typeof options === 'string') {
-      this._auth.apiKey = options
+    if (typeof options === "string") {
+      this._auth.apiKey = options;
     } else {
+      // Ensure apiKey is captured when options is an object
+      if (options.apiKey) {
+        this._auth.apiKey = options.apiKey;
+      }
       if (options.region && options.project_id) {
         this._auth.region = options.region;
         this._auth.project_id = options.project_id;
@@ -484,22 +486,322 @@ class _GoogleGenerativeAI {
       }
     }
     this.tools = [];
-    this.model = options.model || ''
+    this.defaultModel = options.model || "gemini-1.5-flash";
+  }
+
+  /**
+   * Simple text prompt helper method.
+   * @param {string} text - The prompt text
+   * @param {Object} options - Optional configuration
+   * @param {string} [options.model] - Model to use (defaults to instance default)
+   * @param {Object} [options.generationConfig] - Generation configuration
+   * @param {Object} [options.responseSchema] - Schema to enforce response format (JSON schema)
+   * @param {string} [options.responseMimeType] - MIME type for response (e.g., 'application/json')
+   * @param {Object} [options.requestOptions] - Request options
+   * @returns {string|Object} The model's response (parsed JSON if schema is provided)
+   * @example
+   * // Simple text response
+   * const response = genAI.prompt('Explain quantum computing');
+   *
+   * // With JSON schema
+   * const response = genAI.prompt('List 3 colors', {
+   *   responseSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       colors: { type: 'array', items: { type: 'string' } }
+   *     }
+   *   },
+   *   responseMimeType: 'application/json'
+   * });
+   */
+  prompt(text, options = {}) {
+    const modelName = options.model || this.defaultModel;
+
+    // Build generation config with schema if provided
+    const generationConfig = options.generationConfig || {};
+    if (options.responseSchema) {
+      generationConfig.responseSchema = options.responseSchema;
+    }
+    if (options.responseMimeType) {
+      generationConfig.responseMimeType = options.responseMimeType;
+    } else if (options.responseSchema && !generationConfig.responseMimeType) {
+      // Default to JSON if schema is provided
+      generationConfig.responseMimeType = "application/json";
+    }
+
+    const model = this.getGenerativeModel(
+      {
+        model: modelName,
+        generationConfig: generationConfig,
+      },
+      options.requestOptions
+    );
+
+    const result = model.generateContent(text);
+    const responseText = result.response.text();
+
+    // If schema was provided, parse JSON response
+    if (
+      options.responseSchema ||
+      generationConfig.responseMimeType === "application/json"
+    ) {
+      try {
+        return JSON.parse(responseText);
+      } catch (e) {
+        // If parsing fails, return raw text
+        return responseText;
+      }
+    }
+
+    return responseText;
+  }
+
+  /**
+   * Prompt with an image file from Google Drive.
+   * @param {string} text - The prompt text
+   * @param {GoogleAppsScript.Drive.File|Blob} imageFile - Drive file or Blob containing the image
+   * @param {Object} options - Optional configuration
+   * @param {string} [options.model] - Model to use (defaults to instance default)
+   * @param {Object} [options.generationConfig] - Generation configuration
+   * @param {Object} [options.responseSchema] - Schema to enforce response format (JSON schema)
+   * @param {string} [options.responseMimeType] - MIME type for response (e.g., 'application/json')
+   * @param {Object} [options.requestOptions] - Request options
+   * @returns {string|Object} The model's response (parsed JSON if schema is provided)
+   * @example
+   * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
+   * const file = DriveApp.getFileById('FILE_ID');
+   *
+   * // Simple text response
+   * const response = genAI.promptWithImage('What is in this image?', file);
+   *
+   * // With JSON schema
+   * const response = genAI.promptWithImage('List objects in this image', file, {
+   *   responseSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       objects: { type: 'array', items: { type: 'string' } }
+   *     }
+   *   }
+   * });
+   */
+  promptWithImage(text, imageFile, options = {}) {
+    const modelName = options.model || this.defaultModel;
+
+    // Build generation config with schema if provided
+    const generationConfig = options.generationConfig || {};
+    if (options.responseSchema) {
+      generationConfig.responseSchema = options.responseSchema;
+    }
+    if (options.responseMimeType) {
+      generationConfig.responseMimeType = options.responseMimeType;
+    } else if (options.responseSchema && !generationConfig.responseMimeType) {
+      generationConfig.responseMimeType = "application/json";
+    }
+
+    const model = this.getGenerativeModel(
+      {
+        model: modelName,
+        generationConfig: generationConfig,
+      },
+      options.requestOptions
+    );
+
+    // Convert Drive file to inline data
+    const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
+    const bytes = blob.getBytes();
+    const base64Data = Utilities.base64Encode(bytes);
+    const mimeType = blob.getContentType();
+
+    const result = model.generateContent([
+      text,
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      },
+    ]);
+
+    const responseText = result.response.text();
+
+    // If schema was provided, parse JSON response
+    if (
+      options.responseSchema ||
+      generationConfig.responseMimeType === "application/json"
+    ) {
+      try {
+        return JSON.parse(responseText);
+      } catch (e) {
+        return responseText;
+      }
+    }
+
+    return responseText;
+  }
+
+  /**
+   * Prompt with any file type (PDF, audio, video, etc.) from Google Drive.
+   * Note: Large files should be uploaded to Cloud Storage and referenced by URI for better performance.
+   * @param {string} text - The prompt text
+   * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
+   * @param {Object} options - Optional configuration
+   * @param {string} [options.model] - Model to use (defaults to instance default)
+   * @param {Object} [options.generationConfig] - Generation configuration
+   * @param {Object} [options.responseSchema] - Schema to enforce response format (JSON schema)
+   * @param {string} [options.responseMimeType] - MIME type for response (e.g., 'application/json')
+   * @param {Object} [options.requestOptions] - Request options
+   * @returns {string|Object} The model's response (parsed JSON if schema is provided)
+   * @example
+   * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
+   * const pdfFile = DriveApp.getFileById('PDF_ID');
+   *
+   * // Simple text response
+   * const response = genAI.promptWithFile('Summarize this document', pdfFile);
+   *
+   * // With JSON schema
+   * const response = genAI.promptWithFile('Extract key points', pdfFile, {
+   *   responseSchema: {
+   *     type: 'object',
+   *     properties: {
+   *       title: { type: 'string' },
+   *       keyPoints: { type: 'array', items: { type: 'string' } }
+   *     }
+   *   }
+   * });
+   */
+  promptWithFile(text, file, options = {}) {
+    const modelName = options.model || this.defaultModel;
+
+    // Build generation config with schema if provided
+    const generationConfig = options.generationConfig || {};
+    if (options.responseSchema) {
+      generationConfig.responseSchema = options.responseSchema;
+    }
+    if (options.responseMimeType) {
+      generationConfig.responseMimeType = options.responseMimeType;
+    } else if (options.responseSchema && !generationConfig.responseMimeType) {
+      generationConfig.responseMimeType = "application/json";
+    }
+
+    const model = this.getGenerativeModel(
+      {
+        model: modelName,
+        generationConfig: generationConfig,
+      },
+      options.requestOptions
+    );
+
+    // Convert file to inline data
+    const blob = file.getBlob ? file.getBlob() : file;
+    const bytes = blob.getBytes();
+    const base64Data = Utilities.base64Encode(bytes);
+    const mimeType = blob.getContentType();
+
+    const result = model.generateContent([
+      text,
+      {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      },
+    ]);
+
+    const responseText = result.response.text();
+
+    // If schema was provided, parse JSON response
+    if (
+      options.responseSchema ||
+      generationConfig.responseMimeType === "application/json"
+    ) {
+      try {
+        return JSON.parse(responseText);
+      } catch (e) {
+        return responseText;
+      }
+    }
+
+    return responseText;
+  }
+
+  /**
+   * Helper method to create a JSON schema for structured responses.
+   * @param {Object} properties - Schema properties definition
+   * @param {Array<string>} [required] - Array of required field names
+   * @param {string} [description] - Schema description
+   * @returns {Object} A properly formatted JSON schema
+   * @example
+   * const schema = genAI.createSchema({
+   *   name: { type: 'string', description: 'Person name' },
+   *   age: { type: 'integer', description: 'Person age' },
+   *   hobbies: { type: 'array', items: { type: 'string' } }
+   * }, ['name', 'age']);
+   */
+  createSchema(properties, required = [], description = "") {
+    const schema = {
+      type: "object",
+      properties: properties,
+    };
+
+    if (required.length > 0) {
+      schema.required = required;
+    }
+
+    if (description) {
+      schema.description = description;
+    }
+
+    return schema;
+  }
+
+  /**
+   * Convenience method to get a model instance.
+   * @param {string|Object} modelParams - Model name or parameters object
+   * @param {Object} requestOptions - Request options
+   * @returns {GenerativeModel} A generative model instance
+   * @example
+   * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
+   * const model = genAI.getModel('gemini-1.5-pro');
+   */
+  getModel(modelParams, requestOptions) {
+    if (typeof modelParams === "string") {
+      return this.getGenerativeModel({ model: modelParams }, requestOptions);
+    }
+    return this.getGenerativeModel(modelParams, requestOptions);
+  }
+
+  /**
+   * Convenience method to create a model from cached content.
+   * @param {Object} cachedContent - Cached content object
+   * @param {Object} modelParams - Model parameters
+   * @param {Object} requestOptions - Request options
+   * @returns {GenerativeModel} A generative model instance
+   * @example
+   * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
+   * const cache = {...}; // Your cached content
+   * const model = genAI.getModelFromCache(cache);
+   */
+  getModelFromCache(cachedContent, modelParams, requestOptions) {
+    return this.getGenerativeModelFromCachedContent(
+      cachedContent,
+      modelParams,
+      requestOptions
+    );
   }
 
   getGenerativeModel(modelParams, requestOptions) {
     if (!modelParams.model) {
       throw new Error(
         `Must provide a model name. ` +
-        `Example: genai.getGenerativeModel({ model: 'my-model-name' })`
+          `Example: genai.getGenerativeModel({ model: 'my-model-name' })`
       );
     }
     return new GenerativeModel(this._auth, modelParams, requestOptions);
   }
 
   /**
- * Creates a {@link GenerativeModel} instance from provided content cache.
- */
+   * Creates a {@link GenerativeModel} instance from provided content cache.
+   */
   getGenerativeModelFromCachedContent(
     cachedContent,
     modelParams,
@@ -508,19 +810,19 @@ class _GoogleGenerativeAI {
     if (!cachedContent.name) {
       throw new GoogleGenerativeAIRequestInputError(
         "Cached content must contain a `name` field."
-      )
+      );
     }
     if (!cachedContent.model) {
       throw new GoogleGenerativeAIRequestInputError(
         "Cached content must contain a `model` field."
-      )
+      );
     }
 
     /**
      * Not checking tools and toolConfig for now as it would require a deep
      * equality comparison and isn't likely to be a common case.
      */
-    const disallowedDuplicates = ["model", "systemInstruction"]
+    const disallowedDuplicates = ["model", "systemInstruction"];
 
     for (const key of disallowedDuplicates) {
       if (
@@ -531,18 +833,18 @@ class _GoogleGenerativeAI {
         if (key === "model") {
           const modelParamsComp = modelParams.model.startsWith("models/")
             ? modelParams.model.replace("models/", "")
-            : modelParams.model
+            : modelParams.model;
           const cachedContentComp = cachedContent.model.startsWith("models/")
             ? cachedContent.model.replace("models/", "")
-            : cachedContent.model
+            : cachedContent.model;
           if (modelParamsComp === cachedContentComp) {
-            continue
+            continue;
           }
         }
         throw new GoogleGenerativeAIRequestInputError(
           `Different value for "${key}" specified in modelParams` +
-          ` (${modelParams[key]}) and cachedContent (${cachedContent[key]})`
-        )
+            ` (${modelParams[key]}) and cachedContent (${cachedContent[key]})`
+        );
       }
     }
 
@@ -552,13 +854,13 @@ class _GoogleGenerativeAI {
       tools: cachedContent.tools,
       toolConfig: cachedContent.toolConfig,
       systemInstruction: cachedContent.systemInstruction,
-      cachedContent
-    }
+      cachedContent,
+    };
     return new GenerativeModel(
       this._auth,
       modelParamsFromCache,
       requestOptions
-    )
+    );
   }
 }
 /* @constructor
@@ -569,23 +871,68 @@ class _GoogleGenerativeAI {
  * @param {string} [options.type] - Type of authentication (e.g., 'service_account').
  * @param {string} [options.private_key] - Private key for service account authentication.
  * @param {string} [options.client_email] - Client email for service account authentication.
- * @param {string} [options.model] - The model to use (defaults to '').
+ * @param {string} [options.model] - The default model to use (defaults to 'gemini-1.5-flash').
  */
 var GeminiApp = _GoogleGenerativeAI;
 var GoogleGenerativeAI = _GoogleGenerativeAI;
 
+/**
+ * Factory method to create a new GoogleGenerativeAI instance.
+ * Provides a clean API for library users.
+ * @param {Object|string} options - Configuration options or API key string
+ * @param {string} [defaultModel] - Default model to use (e.g., 'gemini-1.5-pro')
+ * @returns {_GoogleGenerativeAI} A new GoogleGenerativeAI instance
+ * @example
+ * // With just an API key
+ * const genAI = GeminiApp.newInstance('YOUR_API_KEY');
+ *
+ * // With API key and default model
+ * const genAI = GeminiApp.newInstance('YOUR_API_KEY', 'gemini-1.5-pro');
+ *
+ * // With full options
+ * const genAI = GeminiApp.newInstance({
+ *   apiKey: 'YOUR_API_KEY',
+ *   model: 'gemini-1.5-pro'
+ * });
+ */
+GeminiApp.newInstance = function (options, defaultModel) {
+  if (typeof options === "string") {
+    options = { apiKey: options };
+  }
+  if (defaultModel) {
+    options.model = defaultModel;
+  }
+  return new _GoogleGenerativeAI(options);
+};
+
+/**
+ * Factory method to create a new GoogleAICacheManager instance.
+ * @param {Object|string} options - Configuration options or API key string
+ * @returns {GoogleAICacheManager} A new GoogleAICacheManager instance
+ * @example
+ * // With just an API key
+ * const cacheManager = GeminiApp.newCacheManager('YOUR_API_KEY');
+ *
+ * // With full options
+ * const cacheManager = GeminiApp.newCacheManager({
+ *   apiKey: 'YOUR_API_KEY'
+ * });
+ */
+GeminiApp.newCacheManager = function (options) {
+  return new GoogleAICacheManager(options);
+};
 
 class _GenerativeModel extends _CoreFunctions {
   constructor(auth, modelParams, requestOptions) {
     super();
     this._auth = auth;
-    this._requestOptions = requestOptions
+    this._requestOptions = requestOptions;
     if (modelParams.model.includes("/")) {
       // Models may be named "models/model-name" or "tunedModels/model-name"
-      this.model = modelParams.model
+      this.model = modelParams.model;
     } else {
       // If path is not included, assume it's a non-tuned model.
-      this.model = `models/${modelParams.model}`
+      this.model = `models/${modelParams.model}`;
     }
     this.generationConfig = modelParams.generationConfig || {};
     this.safetySettings = modelParams.safetySettings || [];
@@ -593,16 +940,16 @@ class _GenerativeModel extends _CoreFunctions {
     this.toolConfig = modelParams.toolConfig;
     this.systemInstruction = this._formatSystemInstruction(
       modelParams.systemInstruction
-    )
-    this.cachedContent = modelParams.cachedContent
+    );
+    this.cachedContent = modelParams.cachedContent;
   }
 
   generateContent(request, requestOptions = {}) {
     const formattedParams = super._formatGenerateContentInput(request);
     const generativeModelRequestOptions = {
       ...this._requestOptions,
-      ...requestOptions
-    }
+      ...requestOptions,
+    };
     return super._generateContent(
       this._auth,
       this.model,
@@ -613,7 +960,7 @@ class _GenerativeModel extends _CoreFunctions {
         toolConfig: this.toolConfig,
         systemInstruction: this.systemInstruction,
         cachedContent: this.cachedContent?.name,
-        ...formattedParams
+        ...formattedParams,
       },
       generativeModelRequestOptions
     );
@@ -627,17 +974,18 @@ class _GenerativeModel extends _CoreFunctions {
       tools: this.tools,
       toolConfig: this.toolConfig,
       systemInstruction: this.systemInstruction,
-      cachedContent: this.cachedContent
-    })
+      cachedContent: this.cachedContent,
+    });
     const generativeModelRequestOptions = {
       ...this._requestOptions,
-      ...requestOptions
-    }
+      ...requestOptions,
+    };
     return super._countTokens(
       this._auth,
       this.model,
       formattedParams,
-      generativeModelRequestOptions);
+      generativeModelRequestOptions
+    );
   }
 
   startChat(startChatParams) {
@@ -651,23 +999,19 @@ class _GenerativeModel extends _CoreFunctions {
         toolConfig: this.toolConfig,
         systemInstruction: this.systemInstruction,
         cachedContent: this.cachedContent?.name,
-        ...startChatParams
+        ...startChatParams,
       },
-      this._requestOptions,
+      this._requestOptions
     );
-  };
-
-  newFunction() {
-    return new FunctionObject()
   }
 
-
-
+  newFunction() {
+    return new FunctionObject();
+  }
 }
-var GenerativeModel = _GenerativeModel
+var GenerativeModel = _GenerativeModel;
 
 class ChatSession extends _CoreFunctions {
-
   constructor(auth, model, params, _requestOptions = {}) {
     super();
     this._auth = auth;
@@ -676,10 +1020,10 @@ class ChatSession extends _CoreFunctions {
     this.model = model;
     this.params = params;
     this.tools = this.params?.tools || [];
-    this._requestOptions = _requestOptions
+    this._requestOptions = _requestOptions;
     if (params?.history) {
-      this._validateChatHistory(params.history)
-      this._history = params.history
+      this._validateChatHistory(params.history);
+      this._history = params.history;
     }
   }
 
@@ -689,25 +1033,43 @@ class ChatSession extends _CoreFunctions {
    * generated them.
    */
   getHistory() {
-    return this._history
+    return this._history;
   }
 
   sendMessage(request, requestOptions = {}, skipFormat = false) {
-    const newContent = (skipFormat) ? request : super._formatNewContent(request);
+    const newContent = skipFormat ? request : super._formatNewContent(request);
+
+    // Build generation config with schema if provided in requestOptions
+    let generationConfig = this?.generationConfig || {};
+    if (requestOptions.responseSchema || requestOptions.responseMimeType) {
+      generationConfig = { ...generationConfig };
+      if (requestOptions.responseSchema) {
+        generationConfig.responseSchema = requestOptions.responseSchema;
+      }
+      if (requestOptions.responseMimeType) {
+        generationConfig.responseMimeType = requestOptions.responseMimeType;
+      } else if (
+        requestOptions.responseSchema &&
+        !generationConfig.responseMimeType
+      ) {
+        generationConfig.responseMimeType = "application/json";
+      }
+    }
+
     const generateContentRequest = {
       safetySettings: this?.safetySettings,
-      generationConfig: this?.generationConfig,
+      generationConfig: generationConfig,
       tools: this?.tools,
       toolConfig: this?.toolConfig,
       systemInstruction: this?.systemInstruction,
       cachedContent: this?.cachedContent,
-      contents: [...this._history, newContent]
-    }
+      contents: [...this._history, newContent],
+    };
 
     const chatSessionRequestOptions = {
       ...this._requestOptions,
-      ...requestOptions
-    }
+      ...requestOptions,
+    };
 
     const result = super._generateContent(
       this._auth,
@@ -740,7 +1102,11 @@ class ChatSession extends _CoreFunctions {
       }
 
       if (endWithResult) {
-        let functionResponse = this._callFunction(functionName, functionArgs, argsOrder);
+        let functionResponse = this._callFunction(
+          functionName,
+          functionArgs,
+          argsOrder
+        );
         if (typeof functionResponse === "string") {
           functionResponse = { text: functionResponse };
         }
@@ -748,52 +1114,60 @@ class ChatSession extends _CoreFunctions {
       } else if (onlyReturnArguments) {
         return functionArgs;
       } else {
-        let functionResponse = this._callFunction(functionName, functionArgs, argsOrder);
+        let functionResponse = this._callFunction(
+          functionName,
+          functionArgs,
+          argsOrder
+        );
         if (typeof functionResponse === "string") {
           functionResponse = { content: functionResponse };
         }
 
         // Inform the chat that the function has been called
         functionParts.push({
-          "role": "model",
-          "parts": [{
-            "functionCall": {
-              "name": functionName,
-              "args": functionArgs
-            }
-          }]
+          role: "model",
+          parts: [
+            {
+              functionCall: {
+                name: functionName,
+                args: functionArgs,
+              },
+            },
+          ],
         });
 
         functionParts.push({
-          "role": "user",
-          "parts": [{
-            "functionResponse": {
-              "name": functionName,
-              "response": functionResponse
-            }
-          }]
+          role: "user",
+          parts: [
+            {
+              functionResponse: {
+                name: functionName,
+                response: functionResponse,
+              },
+            },
+          ],
         });
       }
-      return this.sendMessage(functionParts, requestOptions, true)
+      return this.sendMessage(functionParts, requestOptions, true);
     } else if (
       result.response.candidates &&
       result.response.candidates.length > 0 &&
       result.response.candidates[0]?.content !== undefined
     ) {
-      this._history.push(newContent)
+      this._history.push(newContent);
       const responseContent = {
         parts: [],
         // Response seems to come back without a role set.
         role: "model",
-        ...result.response.candidates?.[0].content
-      }
-      this._history.push(responseContent)
+        ...result.response.candidates?.[0].content,
+      };
+      this._history.push(responseContent);
     } else {
-      const blockErrorMessage = formatBlockErrorMessage(result.response)
+      const blockErrorMessage = formatBlockErrorMessage(result.response);
       if (blockErrorMessage) {
         console.warn(
           `sendMessage() was unsuccessful. ${blockErrorMessage}. Inspect response object for details.`
-        )
+        );
       }
     }
 
@@ -808,65 +1182,65 @@ class ChatSession extends _CoreFunctions {
     const functionDeclaration = {
       name: functionObject.toJSON().name,
       description: functionObject.toJSON().description,
-      parameters: functionObject.toJSON().parameters
+      parameters: functionObject.toJSON().parameters,
     };
 
-    const toolsFunctionObject = this.tools.find(tool => tool.hasOwnProperty("functionDeclarations"));
+    const toolsFunctionObject = this.tools.find((tool) =>
+      tool.hasOwnProperty("functionDeclarations")
+    );
     if (toolsFunctionObject) {
       toolsFunctionObject.functionDeclarations.push(functionDeclaration);
     } else {
-      this.tools.push({ functionDeclarations: [functionDeclaration] })
+      this.tools.push({ functionDeclarations: [functionDeclaration] });
     }
-    return this
+    return this;
   }
 
   _callFunction(functionName, jsonArgs, argsOrder) {
     // Parse JSON arguments
     var argsObj = jsonArgs;
-    let argsArray = argsOrder.map(argName => argsObj[argName]);
+    let argsArray = argsOrder.map((argName) => argsObj[argName]);
 
     // Call the function dynamically
     if (globalThis[functionName] instanceof Function) {
       let functionResponse = globalThis[functionName].apply(null, argsArray);
       if (functionResponse) {
         return functionResponse;
-      }
-      else {
+      } else {
         return "the function has been sucessfully executed but has nothing to return";
       }
-    }
-    else {
+    } else {
       throw Error("Function not found or not a function: " + functionName);
     }
   }
 
   _validateChatHistory(history) {
-    let prevContent = false
+    let prevContent = false;
     for (const currContent of history) {
-      const { role, parts } = currContent
+      const { role, parts } = currContent;
       if (!prevContent && role !== "user") {
         throw new GoogleGenerativeAIError(
           `First content should be with role 'user', got ${role}`
-        )
+        );
       }
       if (!POSSIBLE_ROLES.includes(role)) {
         throw new GoogleGenerativeAIError(
           `Each item should include role field. Got ${role} but valid roles are: ${JSON.stringify(
             POSSIBLE_ROLES
           )}`
-        )
+        );
       }
 
       if (!Array.isArray(parts)) {
         throw new GoogleGenerativeAIError(
           "Content should have 'parts' property with an array of Parts"
-        )
+        );
       }
 
       if (parts.length === 0) {
         throw new GoogleGenerativeAIError(
           "Each Content should have at least one part"
-        )
+        );
       }
 
       const countFields = {
@@ -876,26 +1250,26 @@ class ChatSession extends _CoreFunctions {
         functionResponse: 0,
         fileData: 0,
         executableCode: 0,
-        codeExecutionResult: 0
-      }
+        codeExecutionResult: 0,
+      };
 
       for (const part of parts) {
         for (const key of VALID_PART_FIELDS) {
           if (key in part) {
-            countFields[key] += 1
+            countFields[key] += 1;
           }
         }
       }
-      const validParts = VALID_PARTS_PER_ROLE[role]
+      const validParts = VALID_PARTS_PER_ROLE[role];
       for (const key of VALID_PART_FIELDS) {
         if (!validParts.includes(key) && countFields[key] > 0) {
           throw new GoogleGenerativeAIError(
             `Content with role '${role}' can't contain '${key}' part`
-          )
+          );
         }
       }
 
-      prevContent = true
+      prevContent = true;
     }
   }
 }
@@ -904,7 +1278,8 @@ class ChatSession extends _CoreFunctions {
  * import from https://github.com/google/generative-ai-js/blob/main/packages/main/src/requests/request.ts
  */
 var BASE_URL_STUDIO = "https://generativelanguage.googleapis.com";
-var BASE_URL_VERTEX = "https://{REGION}-aiplatform.googleapis.com/{apiVersion}/projects/{PROJECT_ID}/locations/{REGION}/publishers/google";
+var BASE_URL_VERTEX =
+  "https://{REGION}-aiplatform.googleapis.com/{apiVersion}/projects/{PROJECT_ID}/locations/{REGION}/publishers/google";
 var DEFAULT_API_VERSION_STUDIO = "v1beta";
 var DEFAULT_API_VERSION_VERTEX = "v1";
 
@@ -912,7 +1287,6 @@ var DEFAULT_API_VERSION_VERTEX = "v1";
  * import from https://github.com/google/generative-ai-js/blob/main/packages/main/types/enums.ts
  */
 const POSSIBLE_ROLES = ["user", "model", "function"];
-
 
 /**
  * Harm categories that would cause prompts or candidates to be blocked.
@@ -961,7 +1335,7 @@ const SchemaType = Object.freeze({
   INTEGER: "integer",
   BOOLEAN: "boolean",
   ARRAY: "array",
-  OBJECT: "object"
+  OBJECT: "object",
 });
 
 /**
@@ -979,7 +1353,7 @@ const Task = Object.freeze({
   STREAM_GENERATE_CONTENT: "streamGenerateContent",
   COUNT_TOKENS: "countTokens",
   EMBED_CONTENT: "embedContent",
-  BATCH_EMBED_CONTENTS: "batchEmbedContents"
+  BATCH_EMBED_CONTENTS: "batchEmbedContents",
 });
 
 const FinishReason = Object.freeze({
@@ -1007,6 +1381,14 @@ const FinishReason = Object.freeze({
   OTHER: "OTHER",
 });
 
+// Export enums for easy access (after their definitions)
+GeminiApp.HarmCategory = HarmCategory;
+GeminiApp.HarmBlockThreshold = HarmBlockThreshold;
+GeminiApp.HarmProbability = HarmProbability;
+GeminiApp.SchemaType = SchemaType;
+GeminiApp.BlockReason = BlockReason;
+GeminiApp.FinishReason = FinishReason;
+
 const RpcTask = Object.freeze({
   UPLOAD: "upload",
   LIST: "list",
@@ -1014,7 +1396,7 @@ const RpcTask = Object.freeze({
   DELETE: "delete",
   UPDATE: "update",
   CREATE: "create",
-})
+});
 
 const VALID_PART_FIELDS = [
   "text",
@@ -1039,7 +1421,7 @@ const VALID_PARTS_PER_ROLE = Object.freeze({
  */
 class GoogleGenerativeAIError extends Error {
   constructor(message) {
-    super(`[GoogleGenerativeAI Error]: ${message}`)
+    super(`[GoogleGenerativeAI Error]: ${message}`);
   }
 }
 
@@ -1050,8 +1432,8 @@ class GoogleGenerativeAIError extends Error {
  */
 class GoogleGenerativeAIResponseError extends GoogleGenerativeAIError {
   constructor(message, response) {
-    super(message)
-    this.response = response
+    super(message);
+    this.response = response;
   }
 }
 
@@ -1062,10 +1444,10 @@ class GoogleGenerativeAIResponseError extends GoogleGenerativeAIError {
  */
 class GoogleGenerativeAIFetchError extends GoogleGenerativeAIError {
   constructor(message, status, statusText, errorDetails) {
-    super(message)
-    this.status = status
-    this.statusText = statusText
-    this.errorDetails = errorDetails
+    super(message);
+    this.status = status;
+    this.statusText = statusText;
+    this.errorDetails = errorDetails;
   }
 }
 
@@ -1073,40 +1455,50 @@ class GoogleGenerativeAIFetchError extends GoogleGenerativeAIError {
  * Errors in the contents of a request originating from user input.
  * @public
  */
-class GoogleGenerativeAIRequestInputError extends GoogleGenerativeAIError { }
+class GoogleGenerativeAIRequestInputError extends GoogleGenerativeAIError {}
 
 class RequestUrl {
   constructor(model, task, auth, stream = false, requestOptions) {
     this.model = model;
     this.task = task;
     this._auth = auth;
-    this.apiKey = auth.apiKey ?? '';
+    this.apiKey = auth.apiKey ?? "";
     this.stream = stream;
     this.requestOptions = requestOptions;
   }
   toString() {
-    let url = '';
-    let apiVersion = this.requestOptions?.apiVersion || DEFAULT_API_VERSION_VERTEX;
+    let url = "";
+    let apiVersion =
+      this.requestOptions?.apiVersion || DEFAULT_API_VERSION_VERTEX;
 
     if (this._auth.region && this._auth.project_id) {
-      const replacementMap = { REGION: this._auth.region, PROJECT_ID: this._auth.project_id, apiVersion: apiVersion }
-      url = BASE_URL_VERTEX.replace(/\{(\w+)\}/g, (match, key) => replacementMap[key] || match) + `/${this.model}:${this.task}`;
+      const replacementMap = {
+        REGION: this._auth.region,
+        PROJECT_ID: this._auth.project_id,
+        apiVersion: apiVersion,
+      };
+      url =
+        BASE_URL_VERTEX.replace(
+          /\{(\w+)\}/g,
+          (match, key) => replacementMap[key] || match
+        ) + `/${this.model}:${this.task}`;
     } else {
-      apiVersion = this.requestOptions?.apiVersion || DEFAULT_API_VERSION_STUDIO;
-      url = `${BASE_URL_STUDIO}/${apiVersion}/${this.model}:${this.task}`
+      apiVersion =
+        this.requestOptions?.apiVersion || DEFAULT_API_VERSION_STUDIO;
+      url = `${BASE_URL_STUDIO}/${apiVersion}/${this.model}:${this.task}`;
     }
-    return url
+    return url;
   }
 }
 
 /**
-  * @class
-  * Class representing a function known by function calling model
-  */
+ * @class
+ * Class representing a function known by function calling model
+ */
 class _FunctionObject {
   constructor() {
-    let name = '';
-    let description = '';
+    let name = "";
+    let description = "";
     let properties = {};
     let parameters = {};
     let required = [];
@@ -1137,8 +1529,8 @@ class _FunctionObject {
     /**
      * OPTIONAL
      * If enabled, the conversation with the chat will automatically end when this function is called.
-     * Default : false, eg the function is sent to the chat that will decide what the next action shoud be accordingly. 
-     * @param {boolean} bool - Whether or not you wish for the option to be enabled. 
+     * Default : false, eg the function is sent to the chat that will decide what the next action shoud be accordingly.
+     * @param {boolean} bool - Whether or not you wish for the option to be enabled.
      * @returns {FunctionObject} - The current Function instance.
      */
     this.endWithResult = function (bool) {
@@ -1146,7 +1538,7 @@ class _FunctionObject {
         endingFunction = true;
       }
       return this;
-    }
+    };
 
     /**
      * Adds a property (an argument) to the function.
@@ -1170,18 +1562,19 @@ class _FunctionObject {
 
       properties[name] = {
         type: type,
-        description: description
+        description: description,
       };
 
       if (type === "array") {
         if (itemsType) {
           properties[name]["items"] = {
-            type: itemsType
-          }
-        }
-        else {
-          throw Error("Please precise the type of the items contained in the array when calling addParameter. Use format Array.<itemsType> for the type parameter.");
-          return
+            type: itemsType,
+          };
+        } else {
+          throw Error(
+            "Please precise the type of the items contained in the array when calling addParameter. Use format Array.<itemsType> for the type parameter."
+          );
+          return;
         }
       }
 
@@ -1190,19 +1583,19 @@ class _FunctionObject {
         required.push(name);
       }
       return this;
-    }
+    };
 
     this.addParameters = function (params) {
       properties = params?.properties;
-      required = params?.required || []
+      required = params?.required || [];
       return this;
-    }
+    };
 
     /**
      * OPTIONAL
      * If enabled, the conversation will automatically end when this function is called and the chat will return the arguments in a stringified JSON object.
      * Default : false
-     * @param {boolean} bool - Whether or not you wish for the option to be enabled. 
+     * @param {boolean} bool - Whether or not you wish for the option to be enabled.
      * @returns {FunctionObject} - The current Function instance.
      */
     this.onlyReturnArguments = function (bool) {
@@ -1210,7 +1603,7 @@ class _FunctionObject {
         onlyArgs = true;
       }
       return this;
-    }
+    };
 
     this.toJSON = function () {
       return {
@@ -1219,19 +1612,20 @@ class _FunctionObject {
         parameters: {
           type: "object",
           properties: properties,
-          required: required
+          required: required,
         },
         argumentsInRightOrder: argumentsInRightOrder,
         endingFunction: endingFunction,
-        onlyArgs: onlyArgs
+        onlyArgs: onlyArgs,
       };
-    }
+    };
   }
 }
 var FunctionObject = _FunctionObject;
 
 class ServerRequestUrl {
-  constructor(task, auth, requestOptions) { // Take auth object
+  constructor(task, auth, requestOptions) {
+    // Take auth object
     this.task = task;
     this._auth = auth; // Store auth object
     this.requestOptions = requestOptions;
@@ -1242,8 +1636,8 @@ class ServerRequestUrl {
   }
 
   appendParam(key, value) {
-    const separator = url.includes('?') ? '&' : '?';
-    this._url = `${url}${separator}${key}=${value}`
+    const separator = url.includes("?") ? "&" : "?";
+    this._url = `${url}${separator}${key}=${value}`;
   }
 
   toString() {
@@ -1265,10 +1659,14 @@ function makeRequest_(url, fetchOptions, fetchFn = UrlFetchApp.fetch) {
     if (responseCode === 200) {
       response = JSON.parse(response.getContentText());
       success = true;
-    } else if ([401, 403].includes(responseCode) && this._auth?.type === 'service_account') {
+    } else if (
+      [401, 403].includes(responseCode) &&
+      this._auth?.type === "service_account"
+    ) {
       // Refresh access token for 401/403 errors with service account.
       this._credentialsForVertexAI();
-      fetchOptions.headers['Authorization'] = 'Bearer ' + this._credentialsForVertexAI().accessToken;
+      fetchOptions.headers["Authorization"] =
+        "Bearer " + this._credentialsForVertexAI().accessToken;
       retries++;
     } else if (responseCode === 429) {
       let delay = Math.pow(2, retries) * 1000;
@@ -1277,11 +1675,15 @@ function makeRequest_(url, fetchOptions, fetchFn = UrlFetchApp.fetch) {
       retries++;
     } else if (responseCode >= 500) {
       let delay = Math.pow(2, retries) * 1000;
-      console.warn(`Server error ${responseCode}, retrying in ${delay / 1000} seconds.`);
+      console.warn(
+        `Server error ${responseCode}, retrying in ${delay / 1000} seconds.`
+      );
       Utilities.sleep(delay);
       retries++;
     } else {
-      console.error(`Request failed with code ${responseCode} - ${response.getContentText()}`);
+      console.error(
+        `Request failed with code ${responseCode} - ${response.getContentText()}`
+      );
       throw new Error(`Request failed with code ${responseCode}`); // Throw an error to stop execution.
     }
   }

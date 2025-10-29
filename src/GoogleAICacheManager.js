@@ -22,238 +22,345 @@
  */
 
 class CachedContentUrl extends ServerRequestUrl {
-    constructor(task, auth, requestOptions) {
-      super(task, auth, requestOptions); // Pass auth to super
-      this.task = task;
-      this._auth = auth;
-      this.requestOptions = requestOptions;
-  
-      let baseUrl;
-      let apiVersion;
-  
-      if (this._auth.region && this._auth.project_id) { // Vertex AI endpoint
-        apiVersion = this.requestOptions?.apiVersion || DEFAULT_API_VERSION_VERTEX;
-        baseUrl = `https://${this._auth.region}-aiplatform.googleapis.com/${apiVersion}/projects/${this._auth.project_id}/locations/${this._auth.region}/cachedContents`;
-      } else { // Standard endpoint
-        apiVersion = this.requestOptions?.apiVersion || DEFAULT_API_VERSION_STUDIO;
-        baseUrl = (this.requestOptions?.baseUrl) || `https://generativelanguage.googleapis.com/${apiVersion}/cachedContents`;
-      }
-  
-      this._url = baseUrl;
+  constructor(task, auth, requestOptions) {
+    super(task, auth, requestOptions); // Pass auth to super
+    this.task = task;
+    this._auth = auth;
+    this.requestOptions = requestOptions;
+
+    let baseUrl;
+    let apiVersion;
+
+    if (this._auth.region && this._auth.project_id) {
+      // Vertex AI endpoint
+      apiVersion =
+        this.requestOptions?.apiVersion || DEFAULT_API_VERSION_VERTEX;
+      baseUrl = `https://${this._auth.region}-aiplatform.googleapis.com/${apiVersion}/projects/${this._auth.project_id}/locations/${this._auth.region}/cachedContents`;
+    } else {
+      // Standard endpoint
+      apiVersion =
+        this.requestOptions?.apiVersion || DEFAULT_API_VERSION_STUDIO;
+      baseUrl =
+        this.requestOptions?.baseUrl ||
+        `https://generativelanguage.googleapis.com/${apiVersion}/cachedContents`;
     }
+
+    this._url = baseUrl;
   }
-  
+}
+
+/**
+ * Class for managing GoogleAI content caches.
+ * @public
+ */
+class GoogleAICacheManager {
+  constructor(options) {
+    this._auth = {};
+    if (typeof options === "string") {
+      this._auth.apiKey = options;
+    } else {
+      if (options.apiKey) {
+        this._auth.apiKey = options.apiKey;
+      }
+      if (options.region && options.project_id) {
+        this._auth.region = options.region;
+        this._auth.project_id = options.project_id;
+      }
+      if (options.type && options.type === "service_account") {
+        this._auth.type = options.type;
+        this._auth.private_key = options.private_key;
+        this._auth.client_email = options.client_email;
+      }
+    }
+    // Normalize internal request options key used by methods
+    this._requestOptions = options.requestOptions || {};
+  }
+
   /**
-   * Class for managing GoogleAI content caches.
+   * Convenience method to create a cache with simpler parameters.
+   * @param {Object} options - Cache creation options
+   * @param {string} options.model - Model name (e.g., 'gemini-1.5-pro')
+   * @param {string} options.fileUri - Cloud Storage URI of the file to cache
+   * @param {string} [options.mimeType] - MIME type of the file
+   * @param {number} [options.ttlSeconds] - Time to live in seconds
+   * @param {string} [options.displayName] - Display name for the cache
+   * @param {string} [options.systemInstruction] - System instruction for the model
+   * @returns {Object} The created cache object
+   * @example
+   * const cache = cacheManager.createCache({
+   *   model: 'gemini-1.5-pro',
+   *   fileUri: 'gs://bucket/file.pdf',
+   *   ttlSeconds: 3600,
+   *   displayName: 'My PDF Cache'
+   * });
    */
-  class GoogleAICacheManager {
-    constructor(options) {
-      this._auth = {};
-      if (typeof options === 'string') {
-        this._auth.apiKey = options;
-      } else {
-        if (options.region && options.project_id) {
-          this._auth.region = options.region;
-          this._auth.project_id = options.project_id;
-        }
-        if (options.type && options.type === "service_account") {
-          this._auth.type = options.type;
-          this._auth.private_key = options.private_key;
-          this._auth.client_email = options.client_email;
-        }
-      }
-      this.requestOptions = options.requestOptions || {};
+  createCache(options) {
+    const createOptions = {
+      model: options.model,
+      contents: [
+        {
+          parts: [
+            {
+              fileData: {
+                fileUri: options.fileUri,
+                mimeType: options.mimeType || "application/pdf",
+              },
+            },
+          ],
+        },
+      ],
+      ttlSeconds: options.ttlSeconds || 3600,
+    };
+
+    if (options.displayName) {
+      createOptions.displayName = options.displayName;
     }
-  
-    _getHeaders(auth) {
-      const headers = {
-        'Accept': 'application/json' // Always include Accept header
-      };
-      if (auth.apiKey) {
-        headers['X-Goog-Api-Key'] = auth.apiKey;
-      } else if (auth?.type === 'service_account') {
-        const credentials = this._credentialsForVertexAI();
-        headers['Authorization'] = `Bearer ${credentials.accessToken}`;
-      } else {
-        headers['Authorization'] = `Bearer ${ScriptApp.getOAuthToken()}`;
-      }
-      return headers;
+
+    if (options.systemInstruction) {
+      createOptions.systemInstruction = options.systemInstruction;
     }
-  
-    _credentialsForVertexAI() {
-      try {
-        const service = OAuth2.createService("Vertex")
-          .setTokenUrl('https://oauth2.googleapis.com/token')
-          .setPrivateKey(this._auth.private_key)
-          .setIssuer(this._auth.client_email)
-          .setPropertyStore(PropertiesService.getScriptProperties())
-          .setCache(CacheService.getScriptCache())
-          .setScope("https://www.googleapis.com/auth/cloud-platform");
-        return { accessToken: service.getAccessToken() };
-      } catch (e) {
-        console.error(e);
-        throw e;
-      }
-    }
-  
-    _makeServerRequest(url, headers, body, fetchFn = UrlFetchApp.fetch) {
-      const requestInit = {
-        method: taskToMethod[url.task],
-        contentType: 'application/json',
-        headers
-      }
-      if (body) {
-        requestInit.payload = body
-      }
-      return makeRequest_(url.toString(), requestInit, fetchFn)
-    }
-  
-  
-    /**
-    * Upload a new content cache
-    */
-    create(createOptions) {
-      const newCachedContent = { ...createOptions }
-      if (createOptions.ttlSeconds) {
-        if (createOptions.expireTime) {
-          throw new GoogleGenerativeAIRequestInputError(
-            "You cannot specify both `ttlSeconds` and `expireTime` when creating" +
-            " a content cache. You must choose one."
-          )
-        }
-        if (createOptions.systemInstruction) {
-          newCachedContent.systemInstruction = formatSystemInstruction(
-            createOptions.systemInstruction
-          )
-        }
-        newCachedContent.ttl = createOptions.ttlSeconds.toString() + "s"
-        delete newCachedContent.ttlSeconds
-      }
-      if (!newCachedContent.model) {
-        throw new GoogleGenerativeAIRequestInputError(
-          "Cached content must contain a `model` field."
-        )
-      }
-      if (!newCachedContent.model.includes("/")) {
-        // If path is not included, assume it's a non-tuned model.
-        newCachedContent.model = `models/${newCachedContent.model}`
-      }
-      const url = new CachedContentUrl(
-        RpcTask.CREATE,
-        this._auth,
-        this._requestOptions
-      )
-  
-      const headers = this._getHeaders(this._auth)
-  
-      const response = this._makeServerRequest(
-        url,
-        headers,
-        JSON.stringify(newCachedContent)
-      )
-      return response
-    }
-  
-    /**
-     * List all uploaded content caches
-     */
-    list(listParams) {
-      const url = new CachedContentUrl(
-        RpcTask.LIST,
-        this._auth,
-        this._requestOptions
-      )
-      if (listParams?.pageSize) {
-        url.appendParam("pageSize", listParams.pageSize.toString())
-      }
-      if (listParams?.pageToken) {
-        url.appendParam("pageToken", listParams.pageToken)
-      }
-      const headers = this._getHeaders(this._auth)
-      const response = this._makeServerRequest(url, headers)
-      return response
-    }
-  
-    /**
-     * Get a content cache
-     */
-    get(name) {
-      const url = new CachedContentUrl(
-        RpcTask.GET,
-        this._auth,
-        this._requestOptions
-      )
-      url.appendPath(this._parseCacheName(name))
-      const headers = this._getHeaders(this._auth)
-      const response = this._makeServerRequest(url, headers)
-      return response
-    }
-  
-    /**
-     * Update an existing content cache
-     */
-    update(name, updateParams) {
-      const url = new CachedContentUrl(
-        RpcTask.UPDATE,
-        this._auth,
-        this._requestOptions
-      )
-      url.appendPath(this._parseCacheName(name))
-      const headers = this._getHeaders(this._auth)
-      const formattedCachedContent = {
-        ...updateParams.cachedContent
-      }
-      if (updateParams.cachedContent.ttlSeconds) {
-        formattedCachedContent.ttl =
-          updateParams.cachedContent.ttlSeconds.toString() + "s"
-        delete formattedCachedContent.ttlSeconds
-      }
-      if (updateParams.updateMask) {
-        url.appendParam(
-          "update_mask",
-          updateParams.updateMask.map(prop => this._camelToSnake(prop)).join(",")
-        )
-      }
-      const response = this._makeServerRequest(
-        url,
-        headers,
-        JSON.stringify(formattedCachedContent)
-      )
-      return response
-    }
-  
-    /**
-     * Delete content cache with given name
-     */
-    delete(name) {
-      const url = new CachedContentUrl(
-        RpcTask.DELETE,
-        this._auth,
-        this._requestOptions
-      )
-      url.appendPath(this._parseCacheName(name))
-      const headers = this._getHeaders(this._auth)
-      this._makeServerRequest(url, headers)
-    }
-  
-    /**
-    * If cache name is prepended with "cachedContents/", remove prefix
-    */
-    _parseCacheName(name) {
-      if (name.startsWith("cachedContents/")) {
-        return name.split("cachedContents/")[1]
-      }
-      if (!name) {
-        throw new GoogleGenerativeAIError(
-          `Invalid name ${name}. ` +
-          `Must be in the format "cachedContents/name" or "name"`
-        )
-      }
-      return name
-    }
-  
-    _camelToSnake(str) {
-      return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
-    }
-  
+
+    return this.create(createOptions);
   }
+
+  /**
+   * List all caches with optional filtering.
+   * @param {Object} [options] - List options
+   * @param {number} [options.pageSize] - Number of results per page
+   * @param {string} [options.pageToken] - Page token for pagination
+   * @returns {Object} List response with caches
+   * @example
+   * const caches = cacheManager.listCaches({ pageSize: 10 });
+   */
+  listCaches(options) {
+    return this.list(options);
+  }
+
+  /**
+   * Get a cache by name.
+   * @param {string} name - Cache name (with or without 'cachedContents/' prefix)
+   * @returns {Object} The cache object
+   * @example
+   * const cache = cacheManager.getCache('cachedContents/abc123');
+   */
+  getCache(name) {
+    return this.get(name);
+  }
+
+  /**
+   * Update cache TTL (time to live).
+   * @param {string} name - Cache name
+   * @param {number} ttlSeconds - New TTL in seconds
+   * @returns {Object} Updated cache object
+   * @example
+   * cacheManager.updateTTL('cachedContents/abc123', 7200);
+   */
+  updateTTL(name, ttlSeconds) {
+    return this.update(name, {
+      cachedContent: { ttlSeconds },
+      updateMask: ["ttl"],
+    });
+  }
+
+  /**
+   * Delete a cache by name.
+   * @param {string} name - Cache name
+   * @example
+   * cacheManager.deleteCache('cachedContents/abc123');
+   */
+  deleteCache(name) {
+    return this.delete(name);
+  }
+
+  _getHeaders(auth) {
+    const headers = {
+      Accept: "application/json", // Always include Accept header
+    };
+    if (auth.apiKey) {
+      headers["X-Goog-Api-Key"] = auth.apiKey;
+    } else if (auth?.type === "service_account") {
+      const credentials = this._credentialsForVertexAI();
+      headers["Authorization"] = `Bearer ${credentials.accessToken}`;
+    } else {
+      headers["Authorization"] = `Bearer ${ScriptApp.getOAuthToken()}`;
+    }
+    return headers;
+  }
+
+  _credentialsForVertexAI() {
+    try {
+      const service = OAuth2.createService("Vertex")
+        .setTokenUrl("https://oauth2.googleapis.com/token")
+        .setPrivateKey(this._auth.private_key)
+        .setIssuer(this._auth.client_email)
+        .setPropertyStore(PropertiesService.getScriptProperties())
+        .setCache(CacheService.getScriptCache())
+        .setScope("https://www.googleapis.com/auth/cloud-platform");
+      return { accessToken: service.getAccessToken() };
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  }
+
+  _makeServerRequest(url, headers, body, fetchFn = UrlFetchApp.fetch) {
+    const requestInit = {
+      method: taskToMethod[url.task],
+      contentType: "application/json",
+      headers,
+    };
+    if (body) {
+      requestInit.payload = body;
+    }
+    return makeRequest_(url.toString(), requestInit, fetchFn);
+  }
+
+  /**
+   * Upload a new content cache
+   */
+  create(createOptions) {
+    const newCachedContent = { ...createOptions };
+    if (createOptions.ttlSeconds) {
+      if (createOptions.expireTime) {
+        throw new GoogleGenerativeAIRequestInputError(
+          "You cannot specify both `ttlSeconds` and `expireTime` when creating" +
+            " a content cache. You must choose one."
+        );
+      }
+      if (createOptions.systemInstruction) {
+        newCachedContent.systemInstruction = formatSystemInstruction(
+          createOptions.systemInstruction
+        );
+      }
+      newCachedContent.ttl = createOptions.ttlSeconds.toString() + "s";
+      delete newCachedContent.ttlSeconds;
+    }
+    if (!newCachedContent.model) {
+      throw new GoogleGenerativeAIRequestInputError(
+        "Cached content must contain a `model` field."
+      );
+    }
+    if (!newCachedContent.model.includes("/")) {
+      // If path is not included, assume it's a non-tuned model.
+      newCachedContent.model = `models/${newCachedContent.model}`;
+    }
+    const url = new CachedContentUrl(
+      RpcTask.CREATE,
+      this._auth,
+      this._requestOptions
+    );
+
+    const headers = this._getHeaders(this._auth);
+
+    const response = this._makeServerRequest(
+      url,
+      headers,
+      JSON.stringify(newCachedContent)
+    );
+    return response;
+  }
+
+  /**
+   * List all uploaded content caches
+   */
+  list(listParams) {
+    const url = new CachedContentUrl(
+      RpcTask.LIST,
+      this._auth,
+      this._requestOptions
+    );
+    if (listParams?.pageSize) {
+      url.appendParam("pageSize", listParams.pageSize.toString());
+    }
+    if (listParams?.pageToken) {
+      url.appendParam("pageToken", listParams.pageToken);
+    }
+    const headers = this._getHeaders(this._auth);
+    const response = this._makeServerRequest(url, headers);
+    return response;
+  }
+
+  /**
+   * Get a content cache
+   */
+  get(name) {
+    const url = new CachedContentUrl(
+      RpcTask.GET,
+      this._auth,
+      this._requestOptions
+    );
+    url.appendPath(this._parseCacheName(name));
+    const headers = this._getHeaders(this._auth);
+    const response = this._makeServerRequest(url, headers);
+    return response;
+  }
+
+  /**
+   * Update an existing content cache
+   */
+  update(name, updateParams) {
+    const url = new CachedContentUrl(
+      RpcTask.UPDATE,
+      this._auth,
+      this._requestOptions
+    );
+    url.appendPath(this._parseCacheName(name));
+    const headers = this._getHeaders(this._auth);
+    const formattedCachedContent = {
+      ...updateParams.cachedContent,
+    };
+    if (updateParams.cachedContent.ttlSeconds) {
+      formattedCachedContent.ttl =
+        updateParams.cachedContent.ttlSeconds.toString() + "s";
+      delete formattedCachedContent.ttlSeconds;
+    }
+    if (updateParams.updateMask) {
+      url.appendParam(
+        "update_mask",
+        updateParams.updateMask
+          .map((prop) => this._camelToSnake(prop))
+          .join(",")
+      );
+    }
+    const response = this._makeServerRequest(
+      url,
+      headers,
+      JSON.stringify(formattedCachedContent)
+    );
+    return response;
+  }
+
+  /**
+   * Delete content cache with given name
+   */
+  delete(name) {
+    const url = new CachedContentUrl(
+      RpcTask.DELETE,
+      this._auth,
+      this._requestOptions
+    );
+    url.appendPath(this._parseCacheName(name));
+    const headers = this._getHeaders(this._auth);
+    this._makeServerRequest(url, headers);
+  }
+
+  /**
+   * If cache name is prepended with "cachedContents/", remove prefix
+   */
+  _parseCacheName(name) {
+    if (name.startsWith("cachedContents/")) {
+      return name.split("cachedContents/")[1];
+    }
+    if (!name) {
+      throw new GoogleGenerativeAIError(
+        `Invalid name ${name}. ` +
+          `Must be in the format "cachedContents/name" or "name"`
+      );
+    }
+    return name;
+  }
+
+  _camelToSnake(str) {
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  }
+}
