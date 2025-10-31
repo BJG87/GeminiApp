@@ -162,6 +162,56 @@ function chatConversation() {
 }
 ```
 
+### Chat with Images
+
+```javascript
+function chatWithImage() {
+  const apiKey = "YOUR_API_KEY";
+  const genAI = GeminiApp.newInstance(apiKey);
+  const model = genAI.getModel("gemini-1.5-flash");
+
+  const chat = model.startChat();
+
+  // Send message with image using helper method
+  const imageFile = DriveApp.getFileById("YOUR_IMAGE_ID");
+  const response = chat.sendMessageWithImage(
+    "What objects do you see in this image?",
+    imageFile
+  );
+
+  Logger.log(response.response.text());
+
+  // Follow-up without image (context maintained)
+  const response2 = chat.sendMessage("What colors are most prominent?");
+  Logger.log(response2.response.text());
+}
+```
+
+### Chat with PDFs and Other Files
+
+```javascript
+function chatWithPDF() {
+  const apiKey = "YOUR_API_KEY";
+  const genAI = GeminiApp.newInstance(apiKey);
+  const model = genAI.getModel("gemini-1.5-pro");
+
+  const chat = model.startChat();
+
+  // Send message with PDF
+  const pdfFile = DriveApp.getFileById("YOUR_PDF_ID");
+  const response = chat.sendMessageWithFile(
+    "What is the main topic of this document?",
+    pdfFile
+  );
+
+  Logger.log(response.response.text());
+
+  // Ask follow-up questions about the PDF
+  const response2 = chat.sendMessage("Summarize the key findings");
+  Logger.log(response2.response.text());
+}
+```
+
 ### Function Calling
 
 ```javascript
@@ -566,6 +616,95 @@ Create a model from cached content.
 - `requestOptions` (object, optional): Request options
 
 **Returns:** GenerativeModel instance
+
+### ChatSession Methods
+
+These methods are available on the chat session object returned by `model.startChat()`.
+
+#### `.sendMessage(text, requestOptions?)`
+
+Send a message in the chat session.
+
+**Parameters:**
+
+- `text` (string): Your message text
+- `requestOptions` (object, optional): Request options
+  - `responseSchema` (object): JSON schema to enforce response format
+  - `responseMimeType` (string): Response MIME type
+  - Other model configuration options
+
+**Returns:** object - Response object with `text()` method
+
+**Example:**
+
+```javascript
+const chat = model.startChat();
+const response = chat.sendMessage("Hello!");
+Logger.log(response.text());
+```
+
+#### `.sendMessageWithImage(text, imageFile, requestOptions?)`
+
+Send a message with an image file in the chat session.
+
+**Parameters:**
+
+- `text` (string): Your message text
+- `imageFile` (GoogleAppsScript.Drive.File | GoogleAppsScript.Base.Blob): Drive file or blob
+- `requestOptions` (object, optional): Request options
+  - `responseSchema` (object): JSON schema to enforce response format
+  - `responseMimeType` (string): Response MIME type
+  - Other model configuration options
+
+**Returns:** object - Response object with `text()` method
+
+**Example:**
+
+```javascript
+const chat = model.startChat();
+const file = DriveApp.getFileById("FILE_ID");
+const response = chat.sendMessageWithImage("What's in this image?", file);
+Logger.log(response.text());
+```
+
+#### `.sendMessageWithFile(text, file, requestOptions?)`
+
+Send a message with any file type (PDF, audio, video, etc.) in the chat session.
+
+**Parameters:**
+
+- `text` (string): Your message text
+- `file` (GoogleAppsScript.Drive.File | GoogleAppsScript.Base.Blob): Drive file or blob
+- `requestOptions` (object, optional): Request options
+  - `responseSchema` (object): JSON schema to enforce response format
+  - `responseMimeType` (string): Response MIME type
+  - Other model configuration options
+
+**Returns:** object - Response object with `text()` method
+
+**Example:**
+
+```javascript
+const chat = model.startChat();
+const pdf = DriveApp.getFileById("PDF_FILE_ID");
+const response = chat.sendMessageWithFile("Summarize this document", pdf);
+Logger.log(response.text());
+```
+
+#### `.getHistory()`
+
+Get the full conversation history.
+
+**Returns:** array - Array of message objects with `role` and `parts` properties
+
+**Example:**
+
+```javascript
+const history = chat.getHistory();
+history.forEach((msg) => {
+  Logger.log(`${msg.role}: ${JSON.stringify(msg.parts)}`);
+});
+```
 
 ### Cache Manager Methods
 

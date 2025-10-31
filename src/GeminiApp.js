@@ -1214,6 +1214,70 @@ class ChatSession extends _CoreFunctions {
     }
   }
 
+  /**
+   * Send a message with an image in the chat session.
+   * @param {string} text - The text prompt
+   * @param {GoogleAppsScript.Drive.File|Blob} imageFile - Image file or Blob
+   * @param {Object} [requestOptions] - Optional request options (e.g., responseSchema)
+   * @returns {Object} The response from the model
+   * @example
+   * const chat = model.startChat();
+   * const file = DriveApp.getFileById('IMAGE_ID');
+   * const response = chat.sendMessageWithImage('What is in this image?', file);
+   * Logger.log(response.response.text());
+   */
+  sendMessageWithImage(text, imageFile, requestOptions = {}) {
+    const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
+    const bytes = blob.getBytes();
+    const base64Data = Utilities.base64Encode(bytes);
+    const mimeType = blob.getContentType();
+
+    return this.sendMessage(
+      [
+        { text: text },
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data,
+          },
+        },
+      ],
+      requestOptions
+    );
+  }
+
+  /**
+   * Send a message with any file type (PDF, audio, video, etc.) in the chat session.
+   * @param {string} text - The text prompt
+   * @param {GoogleAppsScript.Drive.File|Blob} file - File or Blob
+   * @param {Object} [requestOptions] - Optional request options (e.g., responseSchema)
+   * @returns {Object} The response from the model
+   * @example
+   * const chat = model.startChat();
+   * const pdf = DriveApp.getFileById('PDF_ID');
+   * const response = chat.sendMessageWithFile('Summarize this document', pdf);
+   * Logger.log(response.response.text());
+   */
+  sendMessageWithFile(text, file, requestOptions = {}) {
+    const blob = file.getBlob ? file.getBlob() : file;
+    const bytes = blob.getBytes();
+    const base64Data = Utilities.base64Encode(bytes);
+    const mimeType = blob.getContentType();
+
+    return this.sendMessage(
+      [
+        { text: text },
+        {
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data,
+          },
+        },
+      ],
+      requestOptions
+    );
+  }
+
   _validateChatHistory(history) {
     let prevContent = false;
     for (const currContent of history) {
