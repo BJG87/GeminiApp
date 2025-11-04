@@ -231,23 +231,26 @@ function test5_promptWithImageStructured() {
 /**
  * Test 6: Prompt with audio file URL
  * Tests audio transcription from URL
- * Note: Skipped by default due to large file size and upload time
+ * 
+ * Note: Skipped because we need a small (<5MB) public audio file.
+ * To test with your own audio file, uncomment and replace the URL.
  */
 function test6_promptWithAudioUrl() {
   console.log('=== Test 6: Prompt with Audio URL ===');
-  console.log('⚠ Test 6 SKIPPED: Audio file is large (30+ MB) and may timeout');
-  console.log('To test audio, run test14_uploadAndReuseFile() which uploads once and reuses');
+  console.log('⚠ Test 6 SKIPPED: No small public audio file available for testing');
+  console.log('To test: uncomment code and use your own audio file URL (<5MB)');
   return true;
   
-  /* Uncomment to run (may take 30+ seconds)
+  /* Uncomment and modify to test with your own audio file:
+  
   try {
     const ai = StvpsAi.newInstance(getApiKey());
 
-    // Public audio URL (JFK speech)
-    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
+    // Replace with your own small audio file URL (<5MB recommended)
+    const audioUrl = 'YOUR_AUDIO_URL_HERE';
 
     const response = ai.promptWithFile(
-      'Provide a brief summary of this audio in 2-3 sentences',
+      'What is being said in this audio?',
       audioUrl,
       { mimeType: 'audio/mpeg' }
     );
@@ -267,45 +270,27 @@ function test6_promptWithAudioUrl() {
 /**
  * Test 7: Prompt with audio file + structured output
  * Tests audio transcription with JSON schema
+ * 
+ * Note: Skipped - requires small audio file for testing.
+ * Uncomment and provide your own audio file URL to test.
  */
 function test7_promptWithAudioStructured() {
-  console.log('⚠ Test 7 SKIPPED: Large audio file may timeout');
-  return true;
   console.log('=== Test 7: Prompt with Audio + Structured Output ===');
-  console.log('⚠ Test 7 SKIPPED: Large audio file may timeout');
+  console.log('⚠ Test 7 SKIPPED: Provide your own small audio file (<5MB) to test');
   return true;
 }
 
 /**
- * Test 8: Prompt with Google Drive audio URL
+ * Test 8: Prompt with Google Drive audio URL  
  * Tests with a Google Drive direct download link
+ * 
+ * Note: Skipped - requires small audio file for testing.
+ * Uncomment and provide your own Drive audio URL to test.
  */
 function test8_promptWithDriveAudioUrl() {
-  console.log('⚠ Test 8 SKIPPED: Large audio file may timeout');
-  return true;
   console.log('=== Test 8: Prompt with Google Drive Audio URL ===');
-
-  try {
-    const ai = StvpsAi.newInstance(getApiKey());
-
-    // Google Drive direct download link
-    const driveAudioUrl = 'https://drive.google.com/uc?export=download&id=1PqLDLIz-ZNnl5lDZSssf0BbTylzrW8GC';
-
-    const response = ai.promptWithFile(
-      'What is being discussed in this audio?',
-      driveAudioUrl,
-      { mimeType: 'audio/mpeg' }
-    );
-
-    console.log('Success!');
-    console.log('Response:', response);
-
-    console.log('✓ Test 8 PASSED\n');
-    return true;
-  } catch (error) {
-    console.log('✗ Test 8 FAILED:', error.toString());
-    return false;
-  }
+  console.log('⚠ Test 8 SKIPPED: Provide your own Drive audio file to test');
+  return true;
 }
 
 // ============================================================================
@@ -412,34 +397,15 @@ function test11_chatWithImage() {
 /**
  * Test 12: Chat with file
  * Tests sending files in chat context
+ * 
+ * Note: Skipped - requires small file for testing.
+ * Test 11 already demonstrates chat with files using an image.
  */
 function test12_chatWithFile() {
-  console.log('⚠ Test 12 SKIPPED: Large audio file may timeout');
-  return true;
   console.log('=== Test 12: Chat with File ===');
-
-  try {
-    const ai = StvpsAi.newInstance(getApiKey());
-    const chat = ai.startChat();
-
-    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
-
-    const response1 = chat.sendMessageWithFile(
-      'Summarize this audio briefly',
-      audioUrl,
-      { mimeType: 'audio/mpeg' }
-    );
-    console.log('Turn 1:', response1);
-
-    const response2 = chat.sendMessage('What year was this from?');
-    console.log('Turn 2:', response2);
-
-    console.log('✓ Test 12 PASSED\n');
-    return true;
-  } catch (error) {
-    console.log('✗ Test 12 FAILED:', error.toString());
-    return false;
-  }
+  console.log('⚠ Test 12 SKIPPED: Provide your own small file to test');
+  console.log('Note: Test 11 demonstrates chat with image files');
+  return true;
 }
 
 /**
