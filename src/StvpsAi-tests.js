@@ -485,20 +485,18 @@ function test13_chatWithStructuredOutput() {
 /**
  * Test 14: Upload file and reuse
  * Tests uploading a file once and using it multiple times
- * This demonstrates the proper pattern for handling large files
- * Note: May take 30+ seconds due to 30MB audio file upload
+ * Uses small file to avoid timeout in automated tests
  */
 function test14_uploadAndReuseFile() {
   console.log('=== Test 14: Upload and Reuse File ===');
-  console.log('Note: This may take 30+ seconds to upload the large audio file...');
 
   try {
     const ai = StvpsAi.newInstance(getApiKey());
 
-    // Upload file once - this is the key: upload once, reuse many times
-    console.log('Uploading 30MB audio file...');
-    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
-    const uploadedFile = ai.uploadFile(audioUrl, 'audio/mpeg', 'JFK Speech');
+    // Upload file once - using small image for automated testing
+    console.log('Uploading file...');
+    const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
+    const uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Image');
 
     console.log('Upload complete!');
     console.log('File URI:', uploadedFile.uri);
@@ -507,14 +505,14 @@ function test14_uploadAndReuseFile() {
     // Now reuse the uploaded file multiple times - no re-upload needed!
     console.log('Using uploaded file for first query...');
     const response1 = ai.promptWithFile(
-      'Summarize this audio in 2-3 sentences',
+      'What food is in this image?',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 1:', response1.substring(0, 100) + '...');
 
     console.log('Using uploaded file for second query...');
     const response2 = ai.promptWithFile(
-      'What are the key themes discussed?',
+      'Describe the colors in this image',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
@@ -528,6 +526,60 @@ function test14_uploadAndReuseFile() {
     return true;
   } catch (error) {
     console.log('✗ Test 14 FAILED:', error.toString());
+    return false;
+  }
+}
+
+/**
+ * Manual Test: Upload large audio file and reuse
+ * Demonstrates the proper pattern for handling large files
+ * WARNING: This will take 30-60+ seconds and may timeout in Apps Script
+ * Recommended: Run this manually when needed, not in automated test suite
+ * 
+ * For production use with large files:
+ * 1. Upload file from Drive (already in Google ecosystem - faster)
+ * 2. Or use this pattern but expect longer execution times
+ */
+function manualTest_uploadLargeAudioFile() {
+  console.log('=== Manual Test: Upload Large Audio File ===');
+  console.log('WARNING: This will take 30-60+ seconds...');
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    // Upload large audio file once
+    console.log('Uploading 30MB audio file...');
+    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
+    const uploadedFile = ai.uploadFile(audioUrl, 'audio/mpeg', 'JFK Speech');
+
+    console.log('Upload complete!');
+    console.log('File URI:', uploadedFile.uri);
+    console.log('File name:', uploadedFile.name);
+
+    // Reuse the uploaded file multiple times
+    console.log('Using uploaded file for transcription...');
+    const response1 = ai.promptWithFile(
+      'Summarize this audio in 2-3 sentences',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+    console.log('Response 1:', response1.substring(0, 100) + '...');
+
+    console.log('Using uploaded file for analysis...');
+    const response2 = ai.promptWithFile(
+      'What are the key themes discussed?',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+    console.log('Response 2:', response2.substring(0, 100) + '...');
+
+    // Clean up
+    console.log('Deleting file...');
+    ai.getFileManager().deleteFile(uploadedFile.name);
+    console.log('File deleted');
+
+    console.log('✓ Manual Test PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Manual Test FAILED:', error.toString());
     return false;
   }
 }
