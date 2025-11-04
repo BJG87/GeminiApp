@@ -492,10 +492,10 @@ function test14_uploadAndReuseFile() {
   try {
     const ai = StvpsAi.newInstance(getApiKey());
 
-    // Upload file once
+    // Upload file once (using small image instead of large audio)
     console.log('Uploading file...');
-    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
-    const uploadedFile = ai.uploadFile(audioUrl, 'audio/mpeg', 'JFK Speech');
+    const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
+    const uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Scones');
 
     console.log('Upload complete!');
     console.log('File URI:', uploadedFile.uri);
@@ -503,13 +503,13 @@ function test14_uploadAndReuseFile() {
 
     // Use the uploaded file multiple times
     const response1 = ai.promptWithFile(
-      'Summarize this audio',
+      'What food is in this image?',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 1:', response1.substring(0, 100) + '...');
 
     const response2 = ai.promptWithFile(
-      'What are the key themes?',
+      'Describe the presentation',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
