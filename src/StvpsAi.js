@@ -89,7 +89,7 @@ class _StvpsAiFileManager {
       const response = UrlFetchApp.fetch(url, { muteHttpExceptions: false });
       const fileData = response.getContent();
 
-      return this._uploadBytes(fileData, mimeType, displayName || this._getFileNameFromUrl(url));
+      return this._uploadBytesSimple(fileData, mimeType, displayName || this._getFileNameFromUrl(url));
     } catch (error) {
       throw new StvpsAiApiError(
         `Failed to fetch file from URL: ${error.message}`,
@@ -117,71 +117,101 @@ class _StvpsAiFileManager {
     const mimeType = blob.getContentType();
     const name = displayName || blob.getName();
 
-    return this._uploadBytes(bytes, mimeType, name);
+    return this._uploadBytesSimple(bytes, mimeType, name);
   }
 
   /**
-   * Internal method to upload file bytes
+   * Internal method to upload file bytes using resumable upload
    * @private
    */
-  _uploadBytes(bytes, mimeType, displayName) {
-    // Prepare metadata
+  _uploadBytesSimple(bytes, mimeType, displayName) {
+    // Use resumable upload - this is the standard way for the Gemini Files API
+    const boundary = '----StvpsAiBoundary' + Utilities.getUuid();
+    
+    // Step 1: Create resumable session with metadata
     const metadata = {
       file: {
-        mimeType: mimeType,
         displayName: displayName
       }
     };
-
-    // Create multipart boundary
-    const boundary = '----StvpsAiBoundary' + Utilities.getUuid();
-
-    // Build multipart body parts
-    const metadataPart =
-      '--' + boundary + '\r\n' +
-      'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-      JSON.stringify(metadata) + '\r\n';
-
-    const filePart =
-      '--' + boundary + '\r\n' +
-      'Content-Type: ' + mimeType + '\r\n\r\n';
-
-    const endBoundary = '\r\n--' + boundary + '--';
-
-    // Combine parts
-    const metadataBlob = Utilities.newBlob(metadataPart);
-    const fileBlob = Utilities.newBlob(bytes);
-    const endBlob = Utilities.newBlob(endBoundary);
-
-    // Create final payload
-    const payload = Utilities.newBlob([
-      metadataBlob.getBytes(),
-      filePart.split('').map(c => c.charCodeAt(0)),
-      fileBlob.getBytes(),
-      endBlob.getBytes()
-    ].flat());
-
-    // Upload with retry logic
-    const uploadUrl = this.uploadBaseUrl + '?key=' + this.apiKey;
-    const options = {
+    
+    // Build initial request with metadata
+    const initialUrl = this.uploadBaseUrl + '?key=' + this.apiKey;
+    const initialOptions = {
       method: 'post',
-      contentType: 'multipart/related; boundary=' + boundary,
-      payload: payload.getBytes(),
-      muteHttpExceptions: true
+      contentType: 'application/json',
+      payload: JSON.stringify(metadata),
+      muteHttpExceptions: true,
+      headers: {
+        'X-Goog-Upload-Protocol': 'resumable',
+        'X-Goog-Upload-Command': 'start',
+        'X-Goog-Upload-Header-Content-Type': mimeType,
+        'X-Goog-Upload-Header-Content-Length': bytes.length
+      }
     };
-
-    const response = this._makeRequestWithRetry(uploadUrl, options);
-    const data = JSON.parse(response.getContentText());
-
-    if (response.getResponseCode() !== 200) {
+    
+    const initialResponse = this._makeRequestWithRetry(initialUrl, initialOptions);
+    
+    if (initialResponse.getResponseCode() !== 200) {
+      const responseText = initialResponse.getContentText();
+      let errorMsg = 'Unknown error';
+      try {
+        const data = JSON.parse(responseText);
+        errorMsg = data.error?.message || errorMsg;
+      } catch (e) {
+        errorMsg = responseText.substring(0, 200);
+      }
       throw new StvpsAiApiError(
-        `File upload failed: ${data.error?.message || 'Unknown error'}`,
-        response.getResponseCode(),
-        data
+        `Failed to start resumable upload: ${errorMsg}`,
+        initialResponse.getResponseCode(),
+        responseText
       );
     }
-
-    return data.file;
+    
+    // Get upload URL from response header
+    const headers = initialResponse.getHeaders();
+    const uploadUrl = headers['X-Goog-Upload-URL'] || headers['x-goog-upload-url'];
+    
+    if (!uploadUrl) {
+      throw new StvpsAiApiError(
+        'No upload URL returned in response',
+        500,
+        initialResponse.getContentText()
+      );
+    }
+    
+    // Step 2: Upload file content
+    const uploadOptions = {
+      method: 'post',
+      contentType: mimeType,
+      payload: bytes,
+      muteHttpExceptions: true,
+      headers: {
+        'X-Goog-Upload-Command': 'upload, finalize',
+        'X-Goog-Upload-Offset': '0'
+      }
+    };
+    
+    const uploadResponse = UrlFetchApp.fetch(uploadUrl, uploadOptions);
+    
+    if (uploadResponse.getResponseCode() !== 200) {
+      const responseText = uploadResponse.getContentText();
+      let errorMsg = 'Unknown error';
+      try {
+        const data = JSON.parse(responseText);
+        errorMsg = data.error?.message || errorMsg;
+      } catch (e) {
+        errorMsg = responseText.substring(0, 200);
+      }
+      throw new StvpsAiApiError(
+        `File upload failed: ${errorMsg}`,
+        uploadResponse.getResponseCode(),
+        responseText
+      );
+    }
+    
+    const uploadedFile = JSON.parse(uploadResponse.getContentText()).file;
+    return uploadedFile;
   }
 
   /**
