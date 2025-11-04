@@ -69,6 +69,9 @@ class _StvpsAiFileManager {
    * Upload a file from a URL to the Gemini Files API
    * This allows you to reference large files by URI instead of sending inline
    * 
+   * IMPORTANT: Apps Script has UrlFetchApp limitations (~20 second timeout, 50MB size limit).
+   * For large files (>10MB), use uploadDriveFile() instead which is faster and more reliable.
+   * 
    * @param {string} url - URL of the file to upload
    * @param {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4', 'application/pdf')
    * @param {string} [displayName] - Optional display name for the file
@@ -76,12 +79,17 @@ class _StvpsAiFileManager {
    * @throws {StvpsAiApiError} If upload fails
    * 
    * @example
+   * // For small files (images, short audio)
    * const fileManager = new StvpsAiFileManager('YOUR_API_KEY');
    * const file = fileManager.uploadFromUrl(
-   *   'https://example.com/audio.mp3',
-   *   'audio/mpeg'
+   *   'https://example.com/image.jpg',
+   *   'image/jpeg'
    * );
-   * // Use file.uri in your prompts
+   * 
+   * @example
+   * // For large files, use Drive instead (RECOMMENDED)
+   * const driveFile = DriveApp.getFileById('YOUR_FILE_ID');
+   * const file = fileManager.uploadDriveFile(driveFile);
    */
   uploadFromUrl(url, mimeType, displayName) {
     try {
