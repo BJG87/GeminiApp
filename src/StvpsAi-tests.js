@@ -485,31 +485,36 @@ function test13_chatWithStructuredOutput() {
 /**
  * Test 14: Upload file and reuse
  * Tests uploading a file once and using it multiple times
+ * This demonstrates the proper pattern for handling large files
+ * Note: May take 30+ seconds due to 30MB audio file upload
  */
 function test14_uploadAndReuseFile() {
   console.log('=== Test 14: Upload and Reuse File ===');
+  console.log('Note: This may take 30+ seconds to upload the large audio file...');
 
   try {
     const ai = StvpsAi.newInstance(getApiKey());
 
-    // Upload file once (using small image instead of large audio)
-    console.log('Uploading file...');
-    const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
-    const uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Scones');
+    // Upload file once - this is the key: upload once, reuse many times
+    console.log('Uploading 30MB audio file...');
+    const audioUrl = 'https://storage.googleapis.com/generativeai-downloads/data/State_of_the_Union_Address_30_January_1961.mp3';
+    const uploadedFile = ai.uploadFile(audioUrl, 'audio/mpeg', 'JFK Speech');
 
     console.log('Upload complete!');
     console.log('File URI:', uploadedFile.uri);
     console.log('File name:', uploadedFile.name);
 
-    // Use the uploaded file multiple times
+    // Now reuse the uploaded file multiple times - no re-upload needed!
+    console.log('Using uploaded file for first query...');
     const response1 = ai.promptWithFile(
-      'What food is in this image?',
+      'Summarize this audio in 2-3 sentences',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 1:', response1.substring(0, 100) + '...');
 
+    console.log('Using uploaded file for second query...');
     const response2 = ai.promptWithFile(
-      'Describe the presentation',
+      'What are the key themes discussed?',
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
