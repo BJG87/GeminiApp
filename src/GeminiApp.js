@@ -28,7 +28,7 @@
  * CoreFunctions for GenerativeModel and Chat.
  */
 class _CoreFunctions {
-  constructor() {}
+  constructor() { }
 
   _countTokens(auth, model, params, singleRequestOptions) {
     // modify the request if vertex ai
@@ -270,8 +270,8 @@ class _CoreFunctions {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-              `candidates. Returning text from the first candidate only. ` +
-              `Access response.candidates directly to use the other candidates.`
+            `candidates. Returning text from the first candidate only. ` +
+            `Access response.candidates directly to use the other candidates.`
           );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
@@ -297,8 +297,8 @@ class _CoreFunctions {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-              `candidates. Returning function calls from the first candidate only. ` +
-              `Access response.candidates directly to use the other candidates.`
+            `candidates. Returning function calls from the first candidate only. ` +
+            `Access response.candidates directly to use the other candidates.`
           );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
@@ -309,7 +309,7 @@ class _CoreFunctions {
         }
         console.warn(
           `response.functionCall() is deprecated. ` +
-            `Use response.functionCalls() instead.`
+          `Use response.functionCalls() instead.`
         );
         return this._getFunctionCalls(response)[0];
       } else if (response.promptFeedback) {
@@ -327,8 +327,8 @@ class _CoreFunctions {
         if (response.candidates.length > 1) {
           console.warn(
             `This response had ${response.candidates.length} ` +
-              `candidates. Returning function calls from the first candidate only. ` +
-              `Access response.candidates directly to use the other candidates.`
+            `candidates. Returning function calls from the first candidate only. ` +
+            `Access response.candidates directly to use the other candidates.`
           );
         }
         if (this._hadBadFinishReason(response.candidates[0])) {
@@ -349,7 +349,7 @@ class _CoreFunctions {
       return undefined;
     };
 
-    response.json = function () {
+    response.json = function() {
       if (response.candidates?.[0].content?.parts?.[0]?.text) {
         return response.candidates[0].content.parts.map(({ text }) =>
           JSON.parse(text)
@@ -371,10 +371,10 @@ class _CoreFunctions {
         if (part.executableCode) {
           textStrings.push(
             "\n```" +
-              part.executableCode.language +
-              "\n" +
-              part.executableCode.code +
-              "\n```\n"
+            part.executableCode.language +
+            "\n" +
+            part.executableCode.code +
+            "\n```\n"
           );
         }
         if (part.codeExecutionResult) {
@@ -486,7 +486,7 @@ class _GoogleGenerativeAI {
       }
     }
     this.tools = [];
-    this.defaultModel = options.model || "gemini-1.5-flash";
+    this.defaultModel = options.model || "gemini-2.5-flash";
   }
 
   /**
@@ -557,9 +557,9 @@ class _GoogleGenerativeAI {
   }
 
   /**
-   * Prompt with an image file from Google Drive.
+   * Prompt with an image file from Google Drive or URL.
    * @param {string} text - The prompt text
-   * @param {GoogleAppsScript.Drive.File|Blob} imageFile - Drive file or Blob containing the image
+   * @param {GoogleAppsScript.Drive.File|Blob|Object} imageFile - Drive file, Blob, or URL object {url: string, mimeType: string}
    * @param {Object} options - Optional configuration
    * @param {string} [options.model] - Model to use (defaults to instance default)
    * @param {Object} [options.generationConfig] - Generation configuration
@@ -571,8 +571,14 @@ class _GoogleGenerativeAI {
    * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
    * const file = DriveApp.getFileById('FILE_ID');
    *
-   * // Simple text response
+   * // Simple text response with Drive file
    * const response = genAI.promptWithImage('What is in this image?', file);
+   *
+   * // With URL
+   * const response = genAI.promptWithImage('What is in this image?', {
+   *   url: 'https://example.com/image.jpg',
+   *   mimeType: 'image/jpeg'
+   * });
    *
    * // With JSON schema
    * const response = genAI.promptWithImage('List objects in this image', file, {
@@ -606,21 +612,32 @@ class _GoogleGenerativeAI {
       options.requestOptions
     );
 
-    // Convert Drive file to inline data
-    const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
-    const bytes = blob.getBytes();
-    const base64Data = Utilities.base64Encode(bytes);
-    const mimeType = blob.getContentType();
+    let filePart;
 
-    const result = model.generateContent([
-      text,
-      {
+    // Check if file is a URL object with url and mimeType properties
+    if (imageFile && typeof imageFile === 'object' && imageFile.url && imageFile.mimeType) {
+      filePart = {
+        fileData: {
+          mimeType: imageFile.mimeType,
+          fileUri: imageFile.url,
+        },
+      };
+    } else {
+      // Convert Drive file to inline data
+      const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
+      const bytes = blob.getBytes();
+      const base64Data = Utilities.base64Encode(bytes);
+      const mimeType = blob.getContentType();
+
+      filePart = {
         inlineData: {
           mimeType: mimeType,
           data: base64Data,
         },
-      },
-    ]);
+      };
+    }
+
+    const result = model.generateContent([text, filePart]);
 
     const responseText = result.response.text();
 
@@ -640,10 +657,10 @@ class _GoogleGenerativeAI {
   }
 
   /**
-   * Prompt with any file type (PDF, audio, video, etc.) from Google Drive.
+   * Prompt with any file type (PDF, audio, video, etc.) from Google Drive or URL.
    * Note: Large files should be uploaded to Cloud Storage and referenced by URI for better performance.
    * @param {string} text - The prompt text
-   * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
+   * @param {GoogleAppsScript.Drive.File|Blob|Object} file - Drive file, Blob, or file URL object {url: string, mimeType: string}
    * @param {Object} options - Optional configuration
    * @param {string} [options.model] - Model to use (defaults to instance default)
    * @param {Object} [options.generationConfig] - Generation configuration
@@ -655,8 +672,14 @@ class _GoogleGenerativeAI {
    * const genAI = new GoogleGenerativeAI('YOUR_API_KEY');
    * const pdfFile = DriveApp.getFileById('PDF_ID');
    *
-   * // Simple text response
+   * // Simple text response with Drive file
    * const response = genAI.promptWithFile('Summarize this document', pdfFile);
+   *
+   * // With file URL
+   * const response = genAI.promptWithFile('Describe this image', {
+   *   url: 'https://example.com/image.jpg',
+   *   mimeType: 'image/jpeg'
+   * });
    *
    * // With JSON schema
    * const response = genAI.promptWithFile('Extract key points', pdfFile, {
@@ -691,21 +714,32 @@ class _GoogleGenerativeAI {
       options.requestOptions
     );
 
-    // Convert file to inline data
-    const blob = file.getBlob ? file.getBlob() : file;
-    const bytes = blob.getBytes();
-    const base64Data = Utilities.base64Encode(bytes);
-    const mimeType = blob.getContentType();
+    let filePart;
 
-    const result = model.generateContent([
-      text,
-      {
+    // Check if file is a URL object with url and mimeType properties
+    if (file && typeof file === 'object' && file.url && file.mimeType) {
+      filePart = {
+        fileData: {
+          mimeType: file.mimeType,
+          fileUri: file.url,
+        },
+      };
+    } else {
+      // Convert file to inline data
+      const blob = file.getBlob ? file.getBlob() : file;
+      const bytes = blob.getBytes();
+      const base64Data = Utilities.base64Encode(bytes);
+      const mimeType = blob.getContentType();
+
+      filePart = {
         inlineData: {
           mimeType: mimeType,
           data: base64Data,
         },
-      },
-    ]);
+      };
+    }
+
+    const result = model.generateContent([text, filePart]);
 
     const responseText = result.response.text();
 
@@ -793,7 +827,7 @@ class _GoogleGenerativeAI {
     if (!modelParams.model) {
       throw new Error(
         `Must provide a model name. ` +
-          `Example: genai.getGenerativeModel({ model: 'my-model-name' })`
+        `Example: genai.getGenerativeModel({ model: 'my-model-name' })`
       );
     }
     return new GenerativeModel(this._auth, modelParams, requestOptions);
@@ -843,7 +877,7 @@ class _GoogleGenerativeAI {
         }
         throw new GoogleGenerativeAIRequestInputError(
           `Different value for "${key}" specified in modelParams` +
-            ` (${modelParams[key]}) and cachedContent (${cachedContent[key]})`
+          ` (${modelParams[key]}) and cachedContent (${cachedContent[key]})`
         );
       }
     }
@@ -895,7 +929,7 @@ var GoogleGenerativeAI = _GoogleGenerativeAI;
  *   model: 'gemini-1.5-pro'
  * });
  */
-GeminiApp.newInstance = function (options, defaultModel) {
+GeminiApp.newInstance = function(options, defaultModel) {
   if (typeof options === "string") {
     options = { apiKey: options };
   }
@@ -918,7 +952,7 @@ GeminiApp.newInstance = function (options, defaultModel) {
  *   apiKey: 'YOUR_API_KEY'
  * });
  */
-GeminiApp.newCacheManager = function (options) {
+GeminiApp.newCacheManager = function(options) {
   return new GoogleAICacheManager(options);
 };
 
@@ -1217,30 +1251,51 @@ class ChatSession extends _CoreFunctions {
   /**
    * Send a message with an image in the chat session.
    * @param {string} text - The text prompt
-   * @param {GoogleAppsScript.Drive.File|Blob} imageFile - Image file or Blob
+   * @param {GoogleAppsScript.Drive.File|Blob|Object} imageFile - Image file, Blob, or URL object {url: string, mimeType: string}
    * @param {Object} [requestOptions] - Optional request options (e.g., responseSchema)
    * @returns {Object} The response from the model
    * @example
    * const chat = model.startChat();
    * const file = DriveApp.getFileById('IMAGE_ID');
    * const response = chat.sendMessageWithImage('What is in this image?', file);
+   * 
+   * // With URL
+   * const response = chat.sendMessageWithImage('What is in this image?', {
+   *   url: 'https://example.com/image.jpg',
+   *   mimeType: 'image/jpeg'
+   * });
    * Logger.log(response.response.text());
    */
   sendMessageWithImage(text, imageFile, requestOptions = {}) {
-    const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
-    const bytes = blob.getBytes();
-    const base64Data = Utilities.base64Encode(bytes);
-    const mimeType = blob.getContentType();
+    let filePart;
+
+    // Check if file is a URL object with url and mimeType properties
+    if (imageFile && typeof imageFile === 'object' && imageFile.url && imageFile.mimeType) {
+      filePart = {
+        fileData: {
+          mimeType: imageFile.mimeType,
+          fileUri: imageFile.url,
+        },
+      };
+    } else {
+      // Convert file to inline data
+      const blob = imageFile.getBlob ? imageFile.getBlob() : imageFile;
+      const bytes = blob.getBytes();
+      const base64Data = Utilities.base64Encode(bytes);
+      const mimeType = blob.getContentType();
+
+      filePart = {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      };
+    }
 
     return this.sendMessage(
       [
         { text: text },
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: base64Data,
-          },
-        },
+        filePart,
       ],
       requestOptions
     );
@@ -1249,30 +1304,51 @@ class ChatSession extends _CoreFunctions {
   /**
    * Send a message with any file type (PDF, audio, video, etc.) in the chat session.
    * @param {string} text - The text prompt
-   * @param {GoogleAppsScript.Drive.File|Blob} file - File or Blob
+   * @param {GoogleAppsScript.Drive.File|Blob|Object} file - File, Blob, or URL object {url: string, mimeType: string}
    * @param {Object} [requestOptions] - Optional request options (e.g., responseSchema)
    * @returns {Object} The response from the model
    * @example
    * const chat = model.startChat();
    * const pdf = DriveApp.getFileById('PDF_ID');
    * const response = chat.sendMessageWithFile('Summarize this document', pdf);
+   * 
+   * // With URL
+   * const response = chat.sendMessageWithFile('Describe this', {
+   *   url: 'https://example.com/image.jpg',
+   *   mimeType: 'image/jpeg'
+   * });
    * Logger.log(response.response.text());
    */
   sendMessageWithFile(text, file, requestOptions = {}) {
-    const blob = file.getBlob ? file.getBlob() : file;
-    const bytes = blob.getBytes();
-    const base64Data = Utilities.base64Encode(bytes);
-    const mimeType = blob.getContentType();
+    let filePart;
+
+    // Check if file is a URL object with url and mimeType properties
+    if (file && typeof file === 'object' && file.url && file.mimeType) {
+      filePart = {
+        fileData: {
+          mimeType: file.mimeType,
+          fileUri: file.url,
+        },
+      };
+    } else {
+      // Convert file to inline data
+      const blob = file.getBlob ? file.getBlob() : file;
+      const bytes = blob.getBytes();
+      const base64Data = Utilities.base64Encode(bytes);
+      const mimeType = blob.getContentType();
+
+      filePart = {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      };
+    }
 
     return this.sendMessage(
       [
         { text: text },
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: base64Data,
-          },
-        },
+        filePart,
       ],
       requestOptions
     );
@@ -1519,7 +1595,7 @@ class GoogleGenerativeAIFetchError extends GoogleGenerativeAIError {
  * Errors in the contents of a request originating from user input.
  * @public
  */
-class GoogleGenerativeAIRequestInputError extends GoogleGenerativeAIError {}
+class GoogleGenerativeAIRequestInputError extends GoogleGenerativeAIError { }
 
 class RequestUrl {
   constructor(model, task, auth, stream = false, requestOptions) {
@@ -1575,7 +1651,7 @@ class _FunctionObject {
      * @param {string} nameOfYourFunction - The name to set for the function.
      * @returns {FunctionObject} - The current Function instance.
      */
-    this.setName = function (nameOfYourFunction) {
+    this.setName = function(nameOfYourFunction) {
       name = nameOfYourFunction;
       return this;
     };
@@ -1585,7 +1661,7 @@ class _FunctionObject {
      * @param {string} descriptionOfYourFunction - The description to set for the function.
      * @returns {FunctionObject} - The current Function instance.
      */
-    this.setDescription = function (descriptionOfYourFunction) {
+    this.setDescription = function(descriptionOfYourFunction) {
       description = descriptionOfYourFunction;
       return this;
     };
@@ -1597,7 +1673,7 @@ class _FunctionObject {
      * @param {boolean} bool - Whether or not you wish for the option to be enabled.
      * @returns {FunctionObject} - The current Function instance.
      */
-    this.endWithResult = function (bool) {
+    this.endWithResult = function(bool) {
       if (bool) {
         endingFunction = true;
       }
@@ -1614,7 +1690,7 @@ class _FunctionObject {
      * @param {boolean} [isOptional] - To set if the argument is optional (default: false).
      * @returns {FunctionObject} - The current Function instance.
      */
-    this.addParameter = function (name, type, description, isOptional = false) {
+    this.addParameter = function(name, type, description, isOptional = false) {
       let itemsType;
 
       if (String(type).includes("Array")) {
@@ -1649,7 +1725,7 @@ class _FunctionObject {
       return this;
     };
 
-    this.addParameters = function (params) {
+    this.addParameters = function(params) {
       properties = params?.properties;
       required = params?.required || [];
       return this;
@@ -1662,14 +1738,14 @@ class _FunctionObject {
      * @param {boolean} bool - Whether or not you wish for the option to be enabled.
      * @returns {FunctionObject} - The current Function instance.
      */
-    this.onlyReturnArguments = function (bool) {
+    this.onlyReturnArguments = function(bool) {
       if (bool) {
         onlyArgs = true;
       }
       return this;
     };
 
-    this.toJSON = function () {
+    this.toJSON = function() {
       return {
         name: name,
         description: description,
