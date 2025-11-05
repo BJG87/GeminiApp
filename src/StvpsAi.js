@@ -5,6 +5,8 @@
  * Features:
  * - Simple text and structured JSON prompts
  * - Image and file support (PDF, audio, video) - SINGLE OR MULTIPLE (arrays supported!)
+ * - Google Workspace file support (Docs, Sheets, Slides) - automatically converted to PDF
+ * - Supports BOTH public URLs and private Google Workspace files (user must have access)
  * - Chat mode with context
  * - File upload API to avoid large inline transfers
  * - Automatic retry with exponential backoff
@@ -32,6 +34,14 @@
  * @example With multiple images
  * const ai = StvpsAi.newInstance(apiKey);
  * const response = ai.promptWithImage('Compare these images', [image1, image2, image3]);
+ * 
+ * @example With private Google Doc (user must have access)
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const response = ai.promptWithFile(
+ *   'Summarize this document',
+ *   'https://docs.google.com/document/d/YOUR_DOC_ID/edit',
+ *   { mimeType: 'application/pdf' }
+ * );
  * 
  * @example Chat mode
  * const ai = StvpsAi.newInstance(apiKey);
@@ -113,6 +123,11 @@ class _StvpsAiFileManager {
    * IMPORTANT: Apps Script has UrlFetchApp limitations (~20 second timeout, 50MB size limit).
    * For large files (>10MB), use uploadDriveFile() instead which is faster and more reliable.
    * 
+   * Supports:
+   * - Public URLs (fetched via UrlFetchApp)
+   * - Private Google Drive files (accessed via DriveApp)
+   * - Private Google Docs/Sheets/Slides (accessed via appropriate Apps Script services, exported as PDF)
+   * 
    * @param {string} url - URL of the file to upload
    * @param {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4', 'application/pdf')
    * @param {string} [displayName] - Optional display name for the file
@@ -131,10 +146,25 @@ class _StvpsAiFileManager {
    * // For large files, use Drive instead (RECOMMENDED)
    * const driveFile = DriveApp.getFileById('YOUR_FILE_ID');
    * const file = fileManager.uploadDriveFile(driveFile);
+   * 
+   * @example
+   * // Private Google Drive file (user must have access)
+   * const file = fileManager.uploadFromUrl(
+   *   'https://drive.google.com/file/d/YOUR_FILE_ID/view',
+   *   'audio/mpeg'
+   * );
    */
   uploadFromUrl(url, mimeType, displayName) {
     try {
-      // Fetch the file from URL
+      // Check if this is a Google Workspace file that needs special handling
+      const fileId = this._extractGoogleFileId(url);
+      
+      if (fileId) {
+        // Handle Google Workspace files (both public and private)
+        return this._uploadGoogleWorkspaceFile(url, fileId, mimeType, displayName);
+      }
+      
+      // For non-Google URLs, fetch directly
       const response = UrlFetchApp.fetch(url, { muteHttpExceptions: false });
       const fileData = response.getContent();
 
@@ -146,6 +176,95 @@ class _StvpsAiFileManager {
         null
       );
     }
+  }
+  
+  /**
+   * Handle uploading Google Workspace files (Docs, Sheets, Slides, Drive)
+   * Supports both public and private files
+   * @private
+   */
+  _uploadGoogleWorkspaceFile(url, fileId, mimeType, displayName) {
+    try {
+      let blob;
+      let finalMimeType = mimeType;
+      let finalDisplayName = displayName;
+      
+      // Google Docs - export as PDF
+      if (url.includes('docs.google.com/document')) {
+        const doc = DocumentApp.openById(fileId);
+        blob = doc.getAs('application/pdf');
+        finalMimeType = 'application/pdf';
+        finalDisplayName = finalDisplayName || doc.getName() + '.pdf';
+      }
+      // Google Sheets - export as PDF
+      else if (url.includes('docs.google.com/spreadsheets')) {
+        const spreadsheet = SpreadsheetApp.openById(fileId);
+        blob = DriveApp.getFileById(fileId).getAs('application/pdf');
+        finalMimeType = 'application/pdf';
+        finalDisplayName = finalDisplayName || spreadsheet.getName() + '.pdf';
+      }
+      // Google Slides - export as PDF
+      else if (url.includes('docs.google.com/presentation')) {
+        const presentation = SlidesApp.openById(fileId);
+        blob = DriveApp.getFileById(fileId).getAs('application/pdf');
+        finalMimeType = 'application/pdf';
+        finalDisplayName = finalDisplayName || presentation.getName() + '.pdf';
+      }
+      // Google Drive file
+      else if (url.includes('drive.google.com')) {
+        const file = DriveApp.getFileById(fileId);
+        blob = file.getBlob();
+        finalMimeType = mimeType || file.getMimeType();
+        finalDisplayName = finalDisplayName || file.getName();
+      }
+      else {
+        // Not a recognized Google Workspace URL, try fetching directly
+        const response = UrlFetchApp.fetch(url, { muteHttpExceptions: false });
+        blob = response.getBlob();
+        finalDisplayName = finalDisplayName || this._getFileNameFromUrl(url);
+      }
+      
+      const bytes = blob.getBytes();
+      return this._uploadBytesSimple(bytes, finalMimeType, finalDisplayName);
+      
+    } catch (error) {
+      // If we don't have access, throw a helpful error
+      if (error.message && error.message.includes('No item with the given ID')) {
+        throw new StvpsAiApiError(
+          `Cannot access Google Workspace file. Please ensure:\n` +
+          `1. You have permission to access the file\n` +
+          `2. The file ID is correct\n` +
+          `3. The file hasn't been deleted\n` +
+          `Original error: ${error.message}`,
+          403,
+          null
+        );
+      }
+      throw error;
+    }
+  }
+  
+  /**
+   * Extract Google file ID from various URL formats
+   * @private
+   */
+  _extractGoogleFileId(url) {
+    // Try different patterns
+    const patterns = [
+      /\/d\/([a-zA-Z0-9_-]+)/,           // /d/FILE_ID
+      /id=([a-zA-Z0-9_-]+)/,             // ?id=FILE_ID
+      /\/file\/d\/([a-zA-Z0-9_-]+)/,     // /file/d/FILE_ID
+      /\/folders\/([a-zA-Z0-9_-]+)/,     // /folders/FOLDER_ID
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -786,6 +905,7 @@ class _StvpsAi {
 
   /**
    * Send a prompt with a file (PDF, audio, video, etc.)
+   * Supports Google Workspace files (Docs, Sheets, Slides) - automatically converted to PDF
    * 
    * @param {string} text - The prompt text
    * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s) as Drive file, Blob, URL string, file URI object, or array of any
@@ -814,6 +934,14 @@ class _StvpsAi {
    *     required: ['summary', 'keyPoints']
    *   }
    * });
+   * 
+   * @example
+   * // Google Doc (automatically converted to PDF)
+   * const response = ai.promptWithFile(
+   *   'Summarize this document',
+   *   'https://docs.google.com/document/d/YOUR_DOC_ID/edit',
+   *   { mimeType: 'application/pdf' }
+   * );
    * 
    * @example
    * // Multiple files
@@ -953,7 +1081,7 @@ class _StvpsAi {
         );
       }
 
-      // Upload to Files API and get URI
+      // Upload to Files API (handles both public URLs and private Google Workspace files)
       const uploadedFile = this.fileManager.uploadFromUrl(file, mimeType);
       return {
         fileData: {

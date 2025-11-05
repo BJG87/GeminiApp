@@ -7,6 +7,8 @@ A streamlined Google Apps Script library for working with Google's Gemini AI API
 - ✨ Simple text and structured JSON prompts
 - 🖼️ Image support (single or multiple)
 - 📄 File support: PDFs, audio, video (single or multiple)
+- 📑 **NEW: Google Workspace files** (Docs, Sheets, Slides) - auto-converted to PDF
+- 🔐 **Supports BOTH public URLs and private files** (with user access permissions)
 - 💬 Chat mode with context
 - ⬆️ File upload API for large files
 - 🔄 Automatic retry with exponential backoff
@@ -105,6 +107,58 @@ const response = ai.promptWithImage(
 ```
 
 ## Working with Files (PDF, Audio, Video)
+
+### Google Workspace Files (Docs, Sheets, Slides)
+
+**NEW: Automatic conversion for Google Workspace files!**
+
+You can now directly use Google Docs, Sheets, and Slides URLs - they'll be automatically converted to PDF format.
+
+**Supports BOTH public and private files:**
+- **Public files**: Any publicly accessible Google Workspace file
+- **Private files**: Files you have access to (the script must be authorized to access them)
+
+```javascript
+// Google Doc (public or private - you must have access)
+const response = ai.promptWithFile(
+  'Summarize this document',
+  'https://docs.google.com/document/d/YOUR_DOC_ID/edit',
+  { mimeType: 'application/pdf' }
+);
+
+// Google Sheet (private file example)
+const response = ai.promptWithFile(
+  'Analyze the data in this spreadsheet',
+  'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit',
+  { mimeType: 'application/pdf' }
+);
+
+// Google Slides
+const response = ai.promptWithFile(
+  'Describe the content of these presentation slides',
+  'https://docs.google.com/presentation/d/YOUR_SLIDE_ID/edit',
+  { mimeType: 'application/pdf' }
+);
+
+// Also works with structured output
+const summary = ai.promptWithFile(
+  'Extract key information from this document',
+  'https://docs.google.com/document/d/YOUR_DOC_ID/edit',
+  {
+    mimeType: 'application/pdf',
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        mainPoints: { type: 'array', items: { type: 'string' } },
+        conclusion: { type: 'string' }
+      }
+    }
+  }
+);
+```
+
+**Note**: The files are automatically exported as PDFs for optimal compatibility with Gemini API.
 
 ### Single File
 

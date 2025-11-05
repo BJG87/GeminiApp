@@ -34,19 +34,19 @@ function getTestAudioFileId() {
  */
 function cleanupAllTestFiles() {
   console.log('=== Cleanup: Deleting All Uploaded Files ===');
-  
+
   try {
     const ai = StvpsAi.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
-    
+
     const result = fileManager.deleteAllFiles(100);
     console.log(`Deleted ${result.deleted} files`);
-    
+
     if (result.failed.length > 0) {
       console.log(`Failed to delete ${result.failed.length} files:`);
       result.failed.forEach(f => console.log(`  - ${f.fileName}: ${f.error}`));
     }
-    
+
     console.log('✓ Cleanup complete\n');
   } catch (error) {
     console.log('✗ Cleanup failed:', error.toString());
@@ -59,16 +59,16 @@ function cleanupAllTestFiles() {
  */
 function listUploadedFiles() {
   console.log('=== Listing Uploaded Files ===');
-  
+
   try {
     const ai = StvpsAi.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
-    
+
     const filesList = fileManager.listFiles(100);
     const count = filesList.files?.length || 0;
-    
+
     console.log(`\nTotal files: ${count}`);
-    
+
     if (count === 0) {
       console.log('No files found.');
     } else {
@@ -82,7 +82,7 @@ function listUploadedFiles() {
         console.log('');
       });
     }
-    
+
     console.log('✓ List complete\n');
   } catch (error) {
     console.log('✗ List failed:', error.toString());
@@ -911,7 +911,7 @@ function test18_multipleImages() {
     // Two image URLs
     const imageUrl1 = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
     const imageUrl2 = 'https://storage.googleapis.com/generativeai-downloads/images/cake.jpg';
-    
+
     // Test with array of images
     const response = ai.promptWithImage(
       'Compare these two images. What do they have in common and how are they different?',
@@ -942,7 +942,7 @@ function test19_multipleFilesInChat() {
     // Two image URLs for comparison
     const imageUrl1 = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
     const imageUrl2 = 'https://storage.googleapis.com/generativeai-downloads/images/cake.jpg';
-    
+
     const response = chat.sendMessageWithImage(
       'What items are in these images?',
       [imageUrl1, imageUrl2],
@@ -954,6 +954,96 @@ function test19_multipleFilesInChat() {
     return true;
   } catch (error) {
     console.log('✗ Test 19 FAILED:', error.toString());
+    return false;
+  }
+}
+
+/**
+ * Test 20: Google Workspace Files (Docs, Sheets, Slides)
+ * Tests automatic conversion of Google Workspace URLs to PDF exports
+ * Supports BOTH public and private files (user must have access to private files)
+ * 
+ * To test with YOUR OWN private files:
+ * 1. Replace the URLs below with your own Google Docs/Sheets/Slides URLs
+ * 2. Make sure the Apps Script project has access to those files
+ * 3. Run the test - it will use Apps Script services to access them securely
+ */
+function test20_WorkspaceFiles() {
+  console.log('=== Test 20: Google Workspace Files ===');
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    // ========================================================================
+    // OPTION 1: Test with a PUBLIC Google Doc
+    // ========================================================================
+    // Using a sample public doc - replace with your own if this doesn't work
+    const publicDocUrl = 'https://docs.google.com/document/d/1cb8BXrqTN7QOQyXU4ZEFbLLVBGwe4X5i0pOzsqNAXOY/edit';
+    
+    console.log('Testing with public Google Doc URL...');
+    const publicResponse = ai.promptWithFile(
+      'In one sentence, what type of document is this?',
+      publicDocUrl,
+      { mimeType: 'application/pdf' }
+    );
+
+    if (!publicResponse || publicResponse.length === 0) {
+      throw new Error('Empty response from public doc');
+    }
+
+    console.log('Public doc response:', publicResponse.substring(0, 150) + '...');
+
+    // ========================================================================
+    // OPTION 2: Test with YOUR OWN PRIVATE file
+    // ========================================================================
+    // Uncomment and replace with your own file URL to test private file access:
+    /*
+    const privateDocUrl = 'https://docs.google.com/document/d/YOUR_PRIVATE_DOC_ID/edit';
+    
+    console.log('\nTesting with private Google Doc (you must have access)...');
+    const privateResponse = ai.promptWithFile(
+      'Summarize this document in one sentence',
+      privateDocUrl,
+      { mimeType: 'application/pdf' }
+    );
+    
+    console.log('Private doc response:', privateResponse.substring(0, 150) + '...');
+    */
+
+    // ========================================================================
+    // OPTION 3: Test with YOUR OWN PRIVATE Google Sheet
+    // ========================================================================
+    // Uncomment to test with a private Google Sheet:
+    /*
+    const privateSheetUrl = 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit';
+    
+    console.log('\nTesting with private Google Sheet...');
+    const sheetResponse = ai.promptWithFile(
+      'What data is in this spreadsheet?',
+      privateSheetUrl,
+      { mimeType: 'application/pdf' }
+    );
+    
+    console.log('Sheet response:', sheetResponse.substring(0, 150) + '...');
+    */
+
+    console.log('\n✓ Test 20 PASSED');
+    console.log('Note: To test private files, uncomment the code above and add your own file URLs');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 20 FAILED:', error.toString());
+    
+    // Provide helpful error messages
+    if (error.message && error.message.includes('No item with the given ID')) {
+      console.log('\nTroubleshooting:');
+      console.log('- Make sure the file ID is correct');
+      console.log('- Ensure you have permission to access the file');
+      console.log('- Try opening the file URL in your browser to verify access');
+    } else if (error.message && error.message.includes('Cannot access')) {
+      console.log('\nThe file exists but you don\'t have access to it.');
+      console.log('Make sure you\'re logged in with the correct Google account.');
+    }
+    
     return false;
   }
 }
@@ -990,7 +1080,8 @@ function runAllTests() {
     { name: 'Invalid API Key', fn: test16_invalidApiKey },
     { name: 'Missing MIME Type', fn: test17_missingMimeType },
     { name: 'Multiple Images', fn: test18_multipleImages },
-    { name: 'Multiple Files in Chat', fn: test19_multipleFilesInChat }
+    { name: 'Multiple Files in Chat', fn: test19_multipleFilesInChat },
+    { name: 'Google Workspace Files', fn: test20_WorkspaceFiles }
   ];
 
   let passed = 0;
