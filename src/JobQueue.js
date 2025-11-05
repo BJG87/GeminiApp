@@ -209,7 +209,16 @@ function processJobs() {
       
     } catch (e) {
       console.error(`Job ${job.id} failed:`, e);
-      // Optionally: add to failed jobs queue or retry logic here
+      
+      // Add to failed jobs list
+      addFailedJob({
+        jobId: job.id,
+        type: job.type,
+        handler: job.handler,
+        data: job.data,
+        error: e.toString(),
+        timestamp: new Date().toISOString()
+      });
       
     } finally {
       // Remove from running jobs
@@ -261,4 +270,109 @@ function clearJobQueue() {
 function clearRunningJobs() {
   setRunningJobs([]);
   console.log('Running jobs cleared');
+}
+
+// ============================================================================
+// FAILED JOBS TRACKING
+// ============================================================================
+
+/**
+ * Get the list of failed jobs
+ * @returns {Array<Object>} Array of failed job objects
+ */
+function getFailedJobs() {
+  const props = PropertiesService.getScriptProperties();
+  const failed = props.getProperty('FAILED_JOBS');
+  return failed ? JSON.parse(failed) : [];
+}
+
+/**
+ * Save the failed jobs list
+ * @param {Array<Object>} failedJobs - Failed jobs array
+ */
+function saveFailedJobs(failedJobs) {
+  PropertiesService.getScriptProperties().setProperty(
+    'FAILED_JOBS',
+    JSON.stringify(failedJobs)
+  );
+}
+
+/**
+ * Add a job to the failed jobs list
+ * 
+ * @param {Object} failedJob - Failed job details
+ * @param {string} failedJob.jobId - Job ID that failed
+ * @param {string} failedJob.type - Job type
+ * @param {string} failedJob.handler - Handler function name
+ * @param {Object} failedJob.data - Job data
+ * @param {string} failedJob.error - Error message
+ * @param {string} failedJob.timestamp - ISO timestamp of failure
+ */
+function addFailedJob(failedJob) {
+  const failedJobs = getFailedJobs();
+  failedJobs.push(failedJob);
+  saveFailedJobs(failedJobs);
+  console.log(`Job ${failedJob.jobId} added to failed jobs list`);
+}
+
+/**
+ * List all failed jobs with details
+ * @returns {Array<Object>} Array of failed job details
+ * 
+ * @example
+ * const failed = listFailedJobs();
+ * failed.forEach(job => {
+ *   console.log(`Job ${job.jobId} failed at ${job.timestamp}`);
+ *   console.log(`Error: ${job.error}`);
+ * });
+ */
+function listFailedJobs() {
+  const failedJobs = getFailedJobs();
+  
+  if (failedJobs.length === 0) {
+    console.log('No failed jobs');
+    return [];
+  }
+  
+  console.log(`=== FAILED JOBS (${failedJobs.length}) ===`);
+  failedJobs.forEach((job, index) => {
+    console.log(`\n${index + 1}. Job ID: ${job.jobId}`);
+    console.log(`   Type: ${job.type}`);
+    console.log(`   Handler: ${job.handler}`);
+    console.log(`   Failed At: ${job.timestamp}`);
+    console.log(`   Error: ${job.error}`);
+    if (job.data && Object.keys(job.data).length > 0) {
+      console.log(`   Data: ${JSON.stringify(job.data, null, 2)}`);
+    }
+  });
+  
+  return failedJobs;
+}
+
+/**
+ * Clear all failed jobs from the list
+ */
+function clearFailedJobs() {
+  saveFailedJobs([]);
+  console.log('Failed jobs list cleared');
+}
+
+/**
+ * Remove a specific failed job by job ID
+ * @param {string} jobId - Job ID to remove
+ * @returns {boolean} True if job was found and removed
+ */
+function removeFailedJob(jobId) {
+  const failedJobs = getFailedJobs();
+  const initialLength = failedJobs.length;
+  const updatedJobs = failedJobs.filter(job => job.jobId !== jobId);
+  
+  if (updatedJobs.length < initialLength) {
+    saveFailedJobs(updatedJobs);
+    console.log(`Failed job ${jobId} removed`);
+    return true;
+  }
+  
+  console.log(`Failed job ${jobId} not found`);
+  return false;
 }
