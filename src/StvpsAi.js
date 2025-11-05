@@ -676,6 +676,30 @@ class _StvpsAi {
    *   mimeType: uploadedFile.mimeType
    * });
    */
+  /**
+   * Send a prompt with an image
+   * 
+   * @param {string} text - The prompt text
+   * @param {Blob|string} image - Image as Blob or URL string
+   * @param {Object} [options] - Options
+   * @param {string} [options.mimeType] - MIME type (required if image is a URL string)
+   * @param {Object} [options.schema] - JSON schema for structured response
+   * @param {string} [options.model] - Override default model
+   * @returns {string|Object} Response text or parsed JSON if schema provided
+   * 
+   * @example
+   * // Analyze image
+   * const response = ai.promptWithImage('What is in this image?', imageBlob);
+   * console.log(response);
+   * 
+   * @example
+   * // With URL
+   * const response = ai.promptWithImage(
+   *   'Describe this image', 
+   *   'https://example.com/image.jpg',
+   *   { mimeType: 'image/jpeg' }
+   * );
+   */
   promptWithImage(text, image, options = {}) {
     const imagePart = this._prepareFilePart(image, 'image', options.mimeType);
 
@@ -1021,7 +1045,15 @@ class _StvpsAi {
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {_StvpsAi} StvpsAi instance
+ * @returns {{
+ *   prompt: function(string, Object=): (string|Object),
+ *   promptWithImage: function(string, (Blob|string), Object=): (string|Object),
+ *   promptWithFile: function(string, (Object|Blob|string), Object=): (string|Object),
+ *   startChat: function(Object=): Object,
+ *   uploadFile: function(string, string, string=): Object,
+ *   uploadDriveFile: function((GoogleAppsScript.Drive.File|Blob), string=): Object,
+ *   getFileManager: function(): Object
+ * }} StvpsAi instance with prompt methods
  * 
  * @example
  * const ai = StvpsAi.newInstance('YOUR_API_KEY');
