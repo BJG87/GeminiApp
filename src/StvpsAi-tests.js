@@ -327,11 +327,14 @@ function test7_promptWithAudioStructured() {
     return true;
   }
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
 
     const driveFile = DriveApp.getFileById(audioFileId);
-    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+    uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
 
     const schema = {
       type: 'object',
@@ -352,19 +355,21 @@ function test7_promptWithAudioStructured() {
     console.log('Summary:', response.summary);
     console.log('Topics:', response.topics);
 
-    // Clean up (may already be deleted by API)
-    try {
-      ai.getFileManager().deleteFile(uploadedFile.name);
-      console.log('File cleaned up');
-    } catch (e) {
-      console.log('Note: File may have been auto-deleted by API');
-    }
-
     console.log('✓ Test 7 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 7 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('File cleaned up');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
@@ -383,12 +388,15 @@ function test8_promptWithDriveAudioUrl() {
     return true;
   }
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
 
     // Upload once
     const driveFile = DriveApp.getFileById(audioFileId);
-    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+    uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
     console.log('File uploaded:', uploadedFile.uri);
 
     // Use multiple times
@@ -404,19 +412,21 @@ function test8_promptWithDriveAudioUrl() {
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
 
-    // Clean up (may already be deleted by API)
-    try {
-      ai.getFileManager().deleteFile(uploadedFile.name);
-      console.log('File cleaned up');
-    } catch (e) {
-      console.log('Note: File may have been auto-deleted by API');
-    }
-
     console.log('✓ Test 8 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 8 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('File cleaned up');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
@@ -536,13 +546,16 @@ function test12_chatWithFile() {
     return true;
   }
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
     const chat = ai.startChat();
 
     // Upload audio file
     const driveFile = DriveApp.getFileById(audioFileId);
-    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+    uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
 
     // First turn: Ask about the audio
     const response1 = chat.sendMessageWithFile(
@@ -555,19 +568,21 @@ function test12_chatWithFile() {
     const response2 = chat.sendMessage('What are the main themes discussed?');
     console.log('Turn 2:', response2.substring(0, 100) + '...');
 
-    // Clean up (may already be deleted by API)
-    try {
-      ai.getFileManager().deleteFile(uploadedFile.name);
-      console.log('File cleaned up');
-    } catch (e) {
-      console.log('Note: File may have been auto-deleted by API');
-    }
-
     console.log('✓ Test 12 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 12 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('File cleaned up');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
@@ -619,13 +634,16 @@ function test13_chatWithStructuredOutput() {
 function test14_uploadAndReuseFile() {
   console.log('=== Test 14: Upload and Reuse File ===');
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
 
     // Upload file once - using small image for automated testing
     console.log('Uploading file...');
     const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
-    const uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Image');
+    uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Image');
 
     console.log('Upload complete!');
     console.log('File URI:', uploadedFile.uri);
@@ -646,16 +664,22 @@ function test14_uploadAndReuseFile() {
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
 
-    // Clean up (may already be deleted by API)
-    console.log('Deleting file...');
-    ai.getFileManager().deleteFile(uploadedFile.name);
-    console.log('File deleted');
-
     console.log('✓ Test 14 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 14 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        console.log('Deleting file...');
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('File deleted');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
@@ -735,13 +759,16 @@ function manualTest_uploadLargeAudioFile() {
 function test15_listFiles() {
   console.log('=== Test 15: List Uploaded Files ===');
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
 
     // Upload a test file
     const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
-    const uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Image');
+    uploadedFile = ai.uploadFile(imageUrl, 'image/jpeg', 'Test Image');
     console.log('Uploaded:', uploadedFile.name);
 
     // List files
@@ -754,15 +781,21 @@ function test15_listFiles() {
       });
     }
 
-    // Clean up (may already be deleted by API)
-    fileManager.deleteFile(uploadedFile.name);
-    console.log('Cleaned up test file');
-
     console.log('✓ Test 15 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 15 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('Cleaned up test file');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
