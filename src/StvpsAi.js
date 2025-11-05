@@ -452,11 +452,11 @@ class _StvpsAiFileManager {
    * @param {string} fileName - Name of the file (e.g., 'files/abc123')
    */
   deleteFile(fileName) {
-    const url = `${this.filesBaseUrl}/${fileName.replace('files/', '')}?key=${this.apiKey}`;
+    const cleanFileName = fileName.replace('files/', '');
+    const url = `${this.filesBaseUrl}/${cleanFileName}?key=${this.apiKey}`;
     const options = {
       method: 'delete',
-      muteHttpExceptions: true,
-      timeout: 10 // 10 second timeout for delete operations
+      muteHttpExceptions: true
     };
     
     try {
@@ -465,28 +465,40 @@ class _StvpsAiFileManager {
 
       // Success
       if (statusCode === 200 || statusCode === 204) {
-        return;
+        return { success: true };
       }
 
       // Already deleted / not found - treat as success
       if (statusCode === 404) {
-        return;
+        return { success: true, alreadyDeleted: true };
       }
 
       // Other errors
-      const data = JSON.parse(response.getContentText());
+      const responseText = response.getContentText();
+      let errorMsg = 'Unknown error';
+      try {
+        const data = JSON.parse(responseText);
+        errorMsg = data.error?.message || errorMsg;
+      } catch (e) {
+        errorMsg = responseText;
+      }
+      
       throw new StvpsAiApiError(
-        `Failed to delete file: ${data.error?.message || 'Unknown error'}`,
+        `Failed to delete file: ${errorMsg}`,
         statusCode,
-        data
+        responseText
       );
     } catch (error) {
       // If it's already our error, re-throw
       if (error instanceof StvpsAiApiError) {
         throw error;
       }
-      // Network timeout or other error - log and continue
-      console.log(`Warning: Could not delete ${fileName}: ${error.message}`);
+      // Network timeout or other error
+      throw new StvpsAiApiError(
+        `Delete request failed: ${error.message}`,
+        0,
+        error.toString()
+      );
     }
   }
 
@@ -506,13 +518,18 @@ class _StvpsAiFileManager {
     for (let i = 0; i < total; i++) {
       const fileName = fileNames[i];
       
-      if (showProgress && (i % 10 === 0 || i === total - 1)) {
+      if (showProgress && (i % 5 === 0 || i === total - 1)) {
         console.log(`Deleting files: ${i + 1}/${total}`);
       }
       
       try {
-        this.deleteFile(fileName);
+        const result = this.deleteFile(fileName);
         results.success.push(fileName);
+        
+        // Small delay to avoid rate limiting
+        if (i < total - 1) {
+          Utilities.sleep(200); // 200ms between deletes
+        }
       } catch (error) {
         results.failed.push({ fileName, error: error.message });
       }
@@ -535,7 +552,38 @@ class _StvpsAiFileManager {
     }
 
     console.log(`Found ${fileNames.length} files to delete...`);
-    const results = this.deleteFiles(fileNames, true); // Show progress
+    
+    // Filter out files that are still processing
+    const files = filesList.files || [];
+    const activeFiles = [];
+    const processingFiles = [];
+    
+    for (const file of files) {
+      if (file.state === 'PROCESSING') {
+        processingFiles.push(file.name);
+      } else {
+        activeFiles.push(file.name);
+      }
+    }
+    
+    if (processingFiles.length > 0) {
+      console.log(`Skipping ${processingFiles.length} files that are still processing`);
+    }
+    
+    if (activeFiles.length === 0) {
+      return { 
+        deleted: 0, 
+        failed: processingFiles.map(name => ({ fileName: name, error: 'File is still processing' }))
+      };
+    }
+    
+    const results = this.deleteFiles(activeFiles, true); // Show progress
+    
+    // Add processing files to failed list
+    processingFiles.forEach(name => {
+      results.failed.push({ fileName: name, error: 'File is still processing' });
+    });
+    
     return {
       deleted: results.success.length,
       failed: results.failed
@@ -1140,20 +1188,31 @@ class _StvpsAi {
 
     // String input - could be URL or file ID
     if (typeof file === 'string') {
-      if (!mimeType) {
-        throw new StvpsAiValidationError(
-          'mimeType is required when providing a URL or file ID string. ' +
-          'Example: ai.promptWithFile(text, url, { mimeType: "audio/mpeg" })'
-        );
-      }
-
       // Check if it's a plain file ID (no slashes, just alphanumeric and dashes)
       const isPlainFileId = /^[a-zA-Z0-9_-]+$/.test(file) && !file.includes('/') && !file.includes('.');
       
-      if (isPlainFileId) {
-        // It's a Google Workspace file ID - use DriveApp directly
+      // Check if it's a Google Workspace URL (docs, sheets, slides, drive)
+      const isWorkspaceUrl = file.includes('docs.google.com/') || 
+                            file.includes('sheets.google.com/') || 
+                            file.includes('slides.google.com/') ||
+                            file.includes('drive.google.com/');
+      
+      if (isPlainFileId || isWorkspaceUrl) {
+        // It's a Google Workspace file ID or URL - use DriveApp directly
+        // No mimeType needed - detected automatically during upload
         try {
-          const driveFile = DriveApp.getFileById(file);
+          let driveFile;
+          if (isPlainFileId) {
+            driveFile = DriveApp.getFileById(file);
+          } else {
+            // Extract file ID from Google Workspace URL
+            const fileIdMatch = file.match(/[-\w]{25,}/);
+            if (!fileIdMatch) {
+              throw new Error('Could not extract file ID from Google Workspace URL');
+            }
+            driveFile = DriveApp.getFileById(fileIdMatch[0]);
+          }
+          
           const uploadedFile = this.fileManager.uploadDriveFile(driveFile);
           return {
             fileData: {
@@ -1163,9 +1222,9 @@ class _StvpsAi {
           };
         } catch (error) {
           throw new StvpsAiApiError(
-            `Cannot access Google Drive file with ID '${file}'. Please ensure:\n` +
+            `Cannot access Google Drive file '${file}'. Please ensure:\n` +
             `1. You have permission to access the file\n` +
-            `2. The file ID is correct\n` +
+            `2. The file ID/URL is correct\n` +
             `3. The file hasn't been deleted\n` +
             `Original error: ${error.message}`,
             403,
@@ -1174,7 +1233,15 @@ class _StvpsAi {
         }
       }
 
-      // It's a URL - upload to Files API (handles both public URLs and private Google Workspace files)
+      // It's a regular URL (not Google Workspace) - mimeType is required
+      if (!mimeType) {
+        throw new StvpsAiValidationError(
+          'mimeType is required when providing a URL or file ID string. ' +
+          'Example: ai.promptWithFile(text, url, { mimeType: "audio/mpeg" })'
+        );
+      }
+      
+      // Upload URL to Files API (handles both public URLs and private Google Workspace files)
       const uploadedFile = this.fileManager.uploadFromUrl(file, mimeType);
       return {
         fileData: {
