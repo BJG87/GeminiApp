@@ -28,6 +28,31 @@ function getTestAudioFileId() {
   return PropertiesService.getScriptProperties().getProperty('TEST_AUDIO_FILE_ID');
 }
 
+/**
+ * Cleanup utility: Delete all uploaded files
+ * Use this if tests fail and leave files behind
+ */
+function cleanupAllTestFiles() {
+  console.log('=== Cleanup: Deleting All Uploaded Files ===');
+  
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+    const fileManager = ai.getFileManager();
+    
+    const result = fileManager.deleteAllFiles(100);
+    console.log(`Deleted ${result.deleted} files`);
+    
+    if (result.failed.length > 0) {
+      console.log(`Failed to delete ${result.failed.length} files:`);
+      result.failed.forEach(f => console.log(`  - ${f.fileName}: ${f.error}`));
+    }
+    
+    console.log('✓ Cleanup complete\n');
+  } catch (error) {
+    console.log('✗ Cleanup failed:', error.toString());
+  }
+}
+
 // ============================================================================
 // BASIC PROMPT TESTS
 // ============================================================================

@@ -249,7 +249,12 @@ class _StvpsAiFileManager {
    */
   deleteFile(fileName) {
     const url = `${this.filesBaseUrl}/${fileName.replace('files/', '')}?key=${this.apiKey}`;
-    const response = this._makeRequestWithRetry(url, { method: 'delete', muteHttpExceptions: true });
+    const options = {
+      method: 'delete',
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options); // Don't use retry for delete - fast fail
 
     if (response.getResponseCode() !== 200 && response.getResponseCode() !== 204) {
       const data = JSON.parse(response.getContentText());
@@ -259,6 +264,49 @@ class _StvpsAiFileManager {
         data
       );
     }
+  }
+
+  /**
+   * Delete multiple files (useful for cleanup)
+   * @param {Array<string>} fileNames - Array of file names to delete
+   * @returns {Object} Result with success and failed arrays
+   */
+  deleteFiles(fileNames) {
+    const results = {
+      success: [],
+      failed: []
+    };
+
+    for (const fileName of fileNames) {
+      try {
+        this.deleteFile(fileName);
+        results.success.push(fileName);
+      } catch (error) {
+        results.failed.push({ fileName, error: error.message });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Delete all files (use with caution!)
+   * @param {number} [maxFiles=100] - Maximum number of files to delete
+   * @returns {Object} Result with deleted count and any errors
+   */
+  deleteAllFiles(maxFiles = 100) {
+    const filesList = this.listFiles(maxFiles);
+    const fileNames = (filesList.files || []).map(f => f.name);
+    
+    if (fileNames.length === 0) {
+      return { deleted: 0, failed: [] };
+    }
+
+    const results = this.deleteFiles(fileNames);
+    return {
+      deleted: results.success.length,
+      failed: results.failed
+    };
   }
 
   /**
