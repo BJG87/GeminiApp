@@ -386,14 +386,15 @@ class _StvpsAiChat {
    * @param {GoogleAppsScript.Drive.File|Blob|string|Object} image - Image file, URL, or file URI object
    * @param {Object} [options] - Options
    * @param {Object} [options.schema] - JSON schema for structured response
+   * @param {string} [options.mimeType] - MIME type (required for URLs)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
    * const chat = ai.startChat();
-   * const response = chat.sendMessageWithImage('What is this?', imageFile);
+   * const response = chat.sendMessageWithImage('What is this?', imageUrl, { mimeType: 'image/jpeg' });
    */
   sendMessageWithImage(text, image, options = {}) {
-    const imagePart = this.ai._prepareFilePart(image, 'image');
+    const imagePart = this.ai._prepareFilePart(image, 'image', options.mimeType);
     return this._sendMessage([{ text: text }, imagePart], options);
   }
 
