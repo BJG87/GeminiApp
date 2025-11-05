@@ -4,7 +4,7 @@
  * 
  * Features:
  * - Simple text and structured JSON prompts
- * - Image and file support (PDF, audio, video)
+ * - Image and file support (PDF, audio, video) - SINGLE OR MULTIPLE (arrays supported!)
  * - Chat mode with context
  * - File upload API to avoid large inline transfers
  * - Automatic retry with exponential backoff
@@ -25,9 +25,13 @@
  * };
  * const data = ai.prompt('Extract person info', { schema });
  * 
- * @example With image
+ * @example With single image
  * const ai = StvpsAi.newInstance(apiKey);
  * const response = ai.promptWithImage('What is in this image?', imageBlob);
+ * 
+ * @example With multiple images
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const response = ai.promptWithImage('Compare these images', [image1, image2, image3]);
  * 
  * @example Chat mode
  * const ai = StvpsAi.newInstance(apiKey);
@@ -41,6 +45,7 @@
  * 
  * @typedef {Object} PromptOptions
  * @property {Object} [schema] - JSON schema for structured output
+ * @property {string|Array<string>} [mimeType] - MIME type(s) for file/image URLs (single or array)
  * @property {number} [temperature] - Controls randomness (0-1)
  * @property {number} [maxOutputTokens] - Maximum response tokens
  * @property {number} [topP] - Nucleus sampling parameter
