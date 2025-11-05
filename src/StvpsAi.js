@@ -9,6 +9,42 @@
  * - File upload API to avoid large inline transfers
  * - Automatic retry with exponential backoff
  * - Clear error messages
+ * 
+ * @example Basic usage
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const response = ai.prompt('Hello, how are you?');
+ * 
+ * @example Structured output
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const schema = {
+ *   type: 'object',
+ *   properties: {
+ *     name: { type: 'string' },
+ *     age: { type: 'number' }
+ *   }
+ * };
+ * const data = ai.prompt('Extract person info', { schema });
+ * 
+ * @example With image
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const response = ai.promptWithImage('What is in this image?', imageBlob);
+ * 
+ * @example Chat mode
+ * const ai = StvpsAi.newInstance(apiKey);
+ * const chat = ai.startChat();
+ * chat.sendMessage('Hello');
+ * chat.sendMessage('Tell me more');
+ * 
+ * @typedef {Object} FileInput
+ * @property {string} uri - File URI from uploadFile() or uploadDriveFile()
+ * @property {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4')
+ * 
+ * @typedef {Object} PromptOptions
+ * @property {Object} [schema] - JSON schema for structured output
+ * @property {number} [temperature] - Controls randomness (0-1)
+ * @property {number} [maxOutputTokens] - Maximum response tokens
+ * @property {number} [topP] - Nucleus sampling parameter
+ * @property {number} [topK] - Top-k sampling parameter
  */
 
 // ============================================================================
@@ -997,7 +1033,19 @@ function newInstance(apiKey, model) {
   return new _StvpsAi(apiKey, model);
 }
 
-// Export the factory function and classes
+/**
+ * StvpsAi - Simplified Gemini API library
+ * 
+ * @namespace
+ * @property {Function} newInstance - Create a new StvpsAi instance
+ * @property {StvpsAiError} Error - Base error class
+ * @property {StvpsAiApiError} ApiError - API error class
+ * @property {StvpsAiValidationError} ValidationError - Validation error class
+ * 
+ * @example
+ * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+ * const response = ai.prompt('Hello!');
+ */
 var StvpsAi = {
   newInstance: newInstance,
   Error: StvpsAiError,
