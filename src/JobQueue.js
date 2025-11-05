@@ -158,6 +158,52 @@ function addJob(job) {
 }
 
 /**
+ * Add multiple jobs to the queue at once
+ * 
+ * @param {Array<Object>} jobs - Array of job objects
+ * @returns {Array<string>} Array of job IDs
+ * 
+ * @example
+ * addJobs([
+ *   { id: 'job-1', type: 'ai-analysis', handler: 'processAiAnalysis', data: { prompt: 'Test 1' } },
+ *   { id: 'job-2', type: 'ai-analysis', handler: 'processAiAnalysis', data: { prompt: 'Test 2' } }
+ * ]);
+ */
+function addJobs(jobs) {
+  if (!Array.isArray(jobs) || jobs.length === 0) {
+    throw new Error('Jobs must be a non-empty array');
+  }
+  
+  // Validate all jobs first
+  jobs.forEach((job, index) => {
+    if (!job.id || !job.type || !job.handler) {
+      throw new Error(`Job at index ${index} must have id, type, and handler properties`);
+    }
+  });
+  
+  // Add all jobs to queue
+  const queue = getJobQueue();
+  const jobIds = [];
+  
+  jobs.forEach(job => {
+    queue.push({
+      id: job.id,
+      type: job.type,
+      handler: job.handler,
+      data: job.data || {},
+      createdAt: new Date().toISOString(),
+      status: 'queued'
+    });
+    jobIds.push(job.id);
+  });
+  
+  saveJobQueue(queue);
+  startProcessingJobs(); // Ensure processor is running
+  console.log(`${jobs.length} jobs added to queue: ${jobIds.join(', ')}`);
+  return jobIds;
+}
+
+/**
  * Process jobs from the queue
  * Called by trigger every minute
  */
