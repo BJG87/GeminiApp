@@ -276,12 +276,15 @@ function test6_promptWithAudioUrl() {
     return true;
   }
 
+  let uploadedFile = null;
+  let ai = null;
+
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    ai = StvpsAi.newInstance(getApiKey());
 
     // Upload from Drive (fast and reliable)
     const driveFile = DriveApp.getFileById(audioFileId);
-    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+    uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
 
     const response = ai.promptWithFile(
       'What is being said in this audio? Provide a brief summary.',
@@ -291,19 +294,21 @@ function test6_promptWithAudioUrl() {
     console.log('Success!');
     console.log('Response:', response.substring(0, 200) + '...');
 
-    // Clean up (may already be deleted by API)
-    try {
-      ai.getFileManager().deleteFile(uploadedFile.name);
-      console.log('File cleaned up');
-    } catch (e) {
-      console.log('Note: File may have been auto-deleted by API');
-    }
-
     console.log('✓ Test 6 PASSED\n');
     return true;
   } catch (error) {
     console.log('✗ Test 6 FAILED:', error.toString());
     return false;
+  } finally {
+    // Always try to cleanup, even if test fails
+    if (uploadedFile && ai) {
+      try {
+        ai.getFileManager().deleteFile(uploadedFile.name);
+        console.log('File cleaned up');
+      } catch (e) {
+        console.log('Note: Cleanup failed -', e.message);
+      }
+    }
   }
 }
 
