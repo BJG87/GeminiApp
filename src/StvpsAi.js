@@ -117,7 +117,7 @@ class _StvpsAiFileManager {
   }
 
   /**
-   * Upload a file from a URL to the Gemini Files API
+   * Upload a file from a URL or Google Workspace file ID to the Gemini Files API
    * This allows you to reference large files by URI instead of sending inline
    * 
    * IMPORTANT: Apps Script has UrlFetchApp limitations (~20 second timeout, 50MB size limit).
@@ -125,10 +125,10 @@ class _StvpsAiFileManager {
    * 
    * Supports:
    * - Public URLs (fetched via UrlFetchApp)
-   * - Private Google Drive files (accessed via DriveApp)
+   * - Private Google Drive files (accessed via DriveApp using URL or file ID)
    * - Private Google Docs/Sheets/Slides (accessed via appropriate Apps Script services, exported as PDF)
    * 
-   * @param {string} url - URL of the file to upload
+   * @param {string} urlOrFileId - URL of the file to upload OR a Google Workspace file ID
    * @param {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4', 'application/pdf')
    * @param {string} [displayName] - Optional display name for the file
    * @returns {Object} File object with properties: name, uri, mimeType, sizeBytes, createTime, etc.
@@ -148,16 +148,32 @@ class _StvpsAiFileManager {
    * const file = fileManager.uploadDriveFile(driveFile);
    * 
    * @example
-   * // Private Google Drive file (user must have access)
+   * // Private Google Drive file using URL (user must have access)
    * const file = fileManager.uploadFromUrl(
    *   'https://drive.google.com/file/d/YOUR_FILE_ID/view',
    *   'audio/mpeg'
    * );
+   * 
+   * @example
+   * // Private Google Drive file using file ID directly
+   * const file = fileManager.uploadFromUrl(
+   *   'YOUR_FILE_ID',
+   *   'audio/mpeg'
+   * );
    */
-  uploadFromUrl(url, mimeType, displayName) {
+  uploadFromUrl(urlOrFileId, mimeType, displayName) {
     try {
-      // Check if this is a Google Workspace file that needs special handling
-      const fileId = this._extractGoogleFileId(url);
+      // Check if this is just a file ID (no URL protocol)
+      let fileId = null;
+      let url = urlOrFileId;
+      
+      if (!urlOrFileId.includes('://')) {
+        // Looks like a bare file ID, treat as Google Drive file
+        fileId = urlOrFileId;
+      } else {
+        // Try to extract file ID from URL
+        fileId = this._extractGoogleFileId(urlOrFileId);
+      }
       
       if (fileId) {
         // Handle Google Workspace files (both public and private)
@@ -165,10 +181,10 @@ class _StvpsAiFileManager {
       }
       
       // For non-Google URLs, fetch directly
-      const response = UrlFetchApp.fetch(url, { muteHttpExceptions: false });
+      const response = UrlFetchApp.fetch(urlOrFileId, { muteHttpExceptions: false });
       const fileData = response.getContent();
 
-      return this._uploadBytesSimple(fileData, mimeType, displayName || this._getFileNameFromUrl(url));
+      return this._uploadBytesSimple(fileData, mimeType, displayName || this._getFileNameFromUrl(urlOrFileId));
     } catch (error) {
       throw new StvpsAiApiError(
         `Failed to fetch file from URL: ${error.message}`,
@@ -189,8 +205,36 @@ class _StvpsAiFileManager {
       let finalMimeType = mimeType;
       let finalDisplayName = displayName;
       
+      // If url is null/empty, we're working with just a file ID - treat as Drive file
+      if (!url || !url.includes('://')) {
+        const file = DriveApp.getFileById(fileId);
+        blob = file.getBlob();
+        const driveFileMimeType = file.getMimeType();
+        
+        // Check if it's a Google Workspace file type and export as PDF
+        if (driveFileMimeType === 'application/vnd.google-apps.document') {
+          const doc = DocumentApp.openById(fileId);
+          blob = doc.getAs('application/pdf');
+          finalMimeType = 'application/pdf';
+          finalDisplayName = finalDisplayName || doc.getName() + '.pdf';
+        } else if (driveFileMimeType === 'application/vnd.google-apps.spreadsheet') {
+          const spreadsheet = SpreadsheetApp.openById(fileId);
+          blob = DriveApp.getFileById(fileId).getAs('application/pdf');
+          finalMimeType = 'application/pdf';
+          finalDisplayName = finalDisplayName || spreadsheet.getName() + '.pdf';
+        } else if (driveFileMimeType === 'application/vnd.google-apps.presentation') {
+          const presentation = SlidesApp.openById(fileId);
+          blob = DriveApp.getFileById(fileId).getAs('application/pdf');
+          finalMimeType = 'application/pdf';
+          finalDisplayName = finalDisplayName || presentation.getName() + '.pdf';
+        } else {
+          // Regular Drive file
+          finalMimeType = mimeType || driveFileMimeType;
+          finalDisplayName = finalDisplayName || file.getName();
+        }
+      }
       // Google Docs - export as PDF
-      if (url.includes('docs.google.com/document')) {
+      else if (url.includes('docs.google.com/document')) {
         const doc = DocumentApp.openById(fileId);
         blob = doc.getAs('application/pdf');
         finalMimeType = 'application/pdf';
