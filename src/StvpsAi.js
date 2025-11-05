@@ -269,15 +269,23 @@ class _StvpsAiFileManager {
   /**
    * Delete multiple files (useful for cleanup)
    * @param {Array<string>} fileNames - Array of file names to delete
+   * @param {boolean} [showProgress=false] - Show progress during deletion
    * @returns {Object} Result with success and failed arrays
    */
-  deleteFiles(fileNames) {
+  deleteFiles(fileNames, showProgress = false) {
     const results = {
       success: [],
       failed: []
     };
 
-    for (const fileName of fileNames) {
+    const total = fileNames.length;
+    for (let i = 0; i < total; i++) {
+      const fileName = fileNames[i];
+      
+      if (showProgress && (i % 10 === 0 || i === total - 1)) {
+        console.log(`Deleting files: ${i + 1}/${total}`);
+      }
+      
       try {
         this.deleteFile(fileName);
         results.success.push(fileName);
@@ -302,7 +310,8 @@ class _StvpsAiFileManager {
       return { deleted: 0, failed: [] };
     }
 
-    const results = this.deleteFiles(fileNames);
+    console.log(`Found ${fileNames.length} files to delete...`);
+    const results = this.deleteFiles(fileNames, true); // Show progress
     return {
       deleted: results.success.length,
       failed: results.failed
