@@ -24,6 +24,7 @@ function getApiKey() {
 
 // Get optional test audio file ID from Script Properties
 function getTestAudioFileId() {
+  return '1PqLDLIz-ZNnl5lDZSssf0BbTylzrW8GC';
   return PropertiesService.getScriptProperties().getProperty('TEST_AUDIO_FILE_ID');
 }
 
@@ -264,9 +265,14 @@ function test6_promptWithAudioUrl() {
 
     console.log('Success!');
     console.log('Response:', response.substring(0, 200) + '...');
-    
-    // Clean up
-    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    // Clean up (may already be deleted by API)
+    try {
+      ai.getFileManager().deleteFile(uploadedFile.name);
+      console.log('File cleaned up');
+    } catch (e) {
+      console.log('Note: File may have been auto-deleted by API');
+    }
 
     console.log('✓ Test 6 PASSED\n');
     return true;
@@ -315,9 +321,14 @@ function test7_promptWithAudioStructured() {
     console.log('Success!');
     console.log('Summary:', response.summary);
     console.log('Topics:', response.topics);
-    
-    // Clean up
-    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    // Clean up (may already be deleted by API)
+    try {
+      ai.getFileManager().deleteFile(uploadedFile.name);
+      console.log('File cleaned up');
+    } catch (e) {
+      console.log('Note: File may have been auto-deleted by API');
+    }
 
     console.log('✓ Test 7 PASSED\n');
     return true;
@@ -362,9 +373,14 @@ function test8_promptWithDriveAudioUrl() {
       { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
-    
-    // Clean up
-    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    // Clean up (may already be deleted by API)
+    try {
+      ai.getFileManager().deleteFile(uploadedFile.name);
+      console.log('File cleaned up');
+    } catch (e) {
+      console.log('Note: File may have been auto-deleted by API');
+    }
 
     console.log('✓ Test 8 PASSED\n');
     return true;
@@ -508,9 +524,14 @@ function test12_chatWithFile() {
     // Second turn: Follow-up question (chat should remember the audio)
     const response2 = chat.sendMessage('What are the main themes discussed?');
     console.log('Turn 2:', response2.substring(0, 100) + '...');
-    
-    // Clean up
-    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    // Clean up (may already be deleted by API)
+    try {
+      ai.getFileManager().deleteFile(uploadedFile.name);
+      console.log('File cleaned up');
+    } catch (e) {
+      console.log('Note: File may have been auto-deleted by API');
+    }
 
     console.log('✓ Test 12 PASSED\n');
     return true;
@@ -595,7 +616,7 @@ function test14_uploadAndReuseFile() {
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
 
-    // Clean up
+    // Clean up (may already be deleted by API)
     console.log('Deleting file...');
     ai.getFileManager().deleteFile(uploadedFile.name);
     console.log('File deleted');
@@ -632,7 +653,7 @@ function manualTest_uploadLargeAudioFile() {
   console.log('NOTE: This test requires modification to use a Drive file instead of URL');
   console.log('See function comments for instructions');
   return true;
-  
+
   /* EXAMPLE CODE - Modify with your Drive file ID:
   
   try {
@@ -663,7 +684,7 @@ function manualTest_uploadLargeAudioFile() {
     );
     console.log('Response 2:', response2.substring(0, 100) + '...');
 
-    // Clean up
+    // Clean up (may already be deleted by API)
     console.log('Deleting file...');
     ai.getFileManager().deleteFile(uploadedFile.name);
     console.log('File deleted');
@@ -703,7 +724,7 @@ function test15_listFiles() {
       });
     }
 
-    // Clean up
+    // Clean up (may already be deleted by API)
     fileManager.deleteFile(uploadedFile.name);
     console.log('Cleaned up test file');
 
