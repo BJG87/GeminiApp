@@ -620,15 +620,19 @@ class _StvpsAiChat {
    * Send a message with an image
    * 
    * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} image - Image file(s), URL(s), or file URI object(s)
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} image - Image file(s), URL(s), file ID(s), or file URI object(s)
    * @param {Object} [options] - Options
    * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs, or array for multiple)
+   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs and file IDs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
    * const chat = ai.startChat();
    * const response = chat.sendMessageWithImage('What is this?', imageUrl, { mimeType: 'image/jpeg' });
+   * 
+   * @example
+   * // With file ID
+   * const response = chat.sendMessageWithImage('What is this?', 'FILE_ID_HERE', { mimeType: 'image/jpeg' });
    * 
    * @example
    * // Multiple images
@@ -658,15 +662,19 @@ class _StvpsAiChat {
    * Send a message with a file (PDF, audio, video, etc.)
    * 
    * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s), URL(s), or file URI object(s)
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s), URL(s), file ID(s), or file URI object(s)
    * @param {Object} [options] - Options
    * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs, or array for multiple)
+   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs and file IDs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
    * const chat = ai.startChat();
    * const response = chat.sendMessageWithFile('Transcribe this', audioFile);
+   * 
+   * @example
+   * // With file ID
+   * const response = chat.sendMessageWithFile('Transcribe this', 'FILE_ID_HERE', { mimeType: 'audio/mpeg' });
    * 
    * @example
    * // Multiple files
@@ -842,9 +850,9 @@ class _StvpsAi {
    * Send a prompt with an image
    * 
    * @param {string} text - The prompt text
-   * @param {Blob|string|Array<Blob|string>} image - Image(s) as Blob, URL string, or array of either
+   * @param {Blob|string|Array<Blob|string>} image - Image(s) as Blob, URL string, file ID string, or array of any
    * @param {Object} [options] - Options
-   * @param {string} [options.mimeType] - MIME type (required if image is a URL string, or array of mimeTypes if multiple images)
+   * @param {string} [options.mimeType] - MIME type (required if image is a URL or file ID string, or array of mimeTypes if multiple images)
    * @param {Object} [options.schema] - JSON schema for structured response
    * @param {string} [options.model] - Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
@@ -859,6 +867,14 @@ class _StvpsAi {
    * const response = ai.promptWithImage(
    *   'Describe this image', 
    *   'https://example.com/image.jpg',
+   *   { mimeType: 'image/jpeg' }
+   * );
+   * 
+   * @example
+   * // With Google Drive file ID
+   * const response = ai.promptWithImage(
+   *   'Describe this image', 
+   *   '1abc-XyZ123_FileID',
    *   { mimeType: 'image/jpeg' }
    * );
    * 
@@ -908,16 +924,22 @@ class _StvpsAi {
    * Supports Google Workspace files (Docs, Sheets, Slides) - automatically converted to PDF
    * 
    * @param {string} text - The prompt text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s) as Drive file, Blob, URL string, file URI object, or array of any
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s) as Drive file, Blob, URL string, file ID string, file URI object, or array of any
    * @param {Object} [options] - Options
-   * @param {string|Array<string>} options.mimeType - MIME type (required if file is a URL string, or array of mimeTypes if multiple files)
+   * @param {string|Array<string>} options.mimeType - MIME type (required if file is a URL or file ID string, or array of mimeTypes if multiple files)
    * @param {Object} [options.schema] - JSON schema for structured response
    * @param {string} [options.model] - Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
-   * // Transcribe audio
-   * const response = ai.promptWithFile('Transcribe this audio', audioFile, {
+   * // Transcribe audio from URL
+   * const response = ai.promptWithFile('Transcribe this audio', audioUrl, {
+   *   mimeType: 'audio/mpeg'
+   * });
+   * 
+   * @example
+   * // Use Google Drive file ID directly
+   * const response = ai.promptWithFile('Transcribe this audio', '1PqLDLIz-ZNnl5lDZSssf0BbTylzrW8GC', {
    *   mimeType: 'audio/mpeg'
    * });
    * 
@@ -1058,7 +1080,7 @@ class _StvpsAi {
 
   /**
    * Prepare a file part for the API request
-   * Handles Drive files, Blobs, URLs, and file URI objects
+   * Handles Drive files, Blobs, URLs, file IDs, and file URI objects
    * @private
    */
   _prepareFilePart(file, type = 'file', mimeType) {
@@ -1072,16 +1094,43 @@ class _StvpsAi {
       };
     }
 
-    // URL string - upload to Files API first
+    // String input - could be URL or file ID
     if (typeof file === 'string') {
       if (!mimeType) {
         throw new StvpsAiValidationError(
-          'mimeType is required when providing a URL string. ' +
+          'mimeType is required when providing a URL or file ID string. ' +
           'Example: ai.promptWithFile(text, url, { mimeType: "audio/mpeg" })'
         );
       }
 
-      // Upload to Files API (handles both public URLs and private Google Workspace files)
+      // Check if it's a plain file ID (no slashes, just alphanumeric and dashes)
+      const isPlainFileId = /^[a-zA-Z0-9_-]+$/.test(file) && !file.includes('/') && !file.includes('.');
+      
+      if (isPlainFileId) {
+        // It's a Google Workspace file ID - use DriveApp directly
+        try {
+          const driveFile = DriveApp.getFileById(file);
+          const uploadedFile = this.fileManager.uploadDriveFile(driveFile);
+          return {
+            fileData: {
+              mimeType: uploadedFile.mimeType,
+              fileUri: uploadedFile.uri
+            }
+          };
+        } catch (error) {
+          throw new StvpsAiApiError(
+            `Cannot access Google Drive file with ID '${file}'. Please ensure:\n` +
+            `1. You have permission to access the file\n` +
+            `2. The file ID is correct\n` +
+            `3. The file hasn't been deleted\n` +
+            `Original error: ${error.message}`,
+            403,
+            null
+          );
+        }
+      }
+
+      // It's a URL - upload to Files API (handles both public URLs and private Google Workspace files)
       const uploadedFile = this.fileManager.uploadFromUrl(file, mimeType);
       return {
         fileData: {

@@ -979,7 +979,7 @@ function test20_WorkspaceFiles() {
     // ========================================================================
     // Using a sample public doc - replace with your own if this doesn't work
     const publicDocUrl = 'https://docs.google.com/document/d/1cb8BXrqTN7QOQyXU4ZEFbLLVBGwe4X5i0pOzsqNAXOY/edit';
-    
+
     console.log('Testing with public Google Doc URL...');
     const publicResponse = ai.promptWithFile(
       'In one sentence, what type of document is this?',
@@ -997,18 +997,18 @@ function test20_WorkspaceFiles() {
     // OPTION 2: Test with YOUR OWN PRIVATE file
     // ========================================================================
     // Uncomment and replace with your own file URL to test private file access:
-    /*
-    const privateDocUrl = 'https://docs.google.com/document/d/YOUR_PRIVATE_DOC_ID/edit';
-    
+
+    const privateDocUrl = 'https://docs.google.com/document/d/1cb8BXrqTN7QOQyXU4ZEFbLLVBGwe4X5i0pOzsqNAXOY/edit';
+
     console.log('\nTesting with private Google Doc (you must have access)...');
     const privateResponse = ai.promptWithFile(
       'Summarize this document in one sentence',
       privateDocUrl,
       { mimeType: 'application/pdf' }
     );
-    
+
     console.log('Private doc response:', privateResponse.substring(0, 150) + '...');
-    */
+
 
     // ========================================================================
     // OPTION 3: Test with YOUR OWN PRIVATE Google Sheet
@@ -1032,7 +1032,7 @@ function test20_WorkspaceFiles() {
     return true;
   } catch (error) {
     console.log('✗ Test 20 FAILED:', error.toString());
-    
+
     // Provide helpful error messages
     if (error.message && error.message.includes('No item with the given ID')) {
       console.log('\nTroubleshooting:');
@@ -1043,7 +1043,58 @@ function test20_WorkspaceFiles() {
       console.log('\nThe file exists but you don\'t have access to it.');
       console.log('Make sure you\'re logged in with the correct Google account.');
     }
-    
+
+    return false;
+  }
+}
+
+/**
+ * Test 21: Direct Google Drive File ID
+ * Tests using just the file ID instead of a full URL
+ */
+function test21_driveFileId() {
+  console.log('=== Test 21: Direct Google Drive File ID ===');
+
+  const audioFileId = getTestAudioFileId();
+  if (!audioFileId) {
+    console.log('⊘ Test 21 SKIPPED: No test audio file ID set');
+    console.log('To run this test, set TEST_AUDIO_FILE_ID in Script Properties');
+    return null;
+  }
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    console.log(`Using file ID: ${audioFileId}`);
+    console.log('Sending prompt with file ID (no URL needed)...');
+
+    // Test with just the file ID (not a URL)
+    const response = ai.promptWithFile(
+      'Transcribe this audio file and provide a brief summary of what is discussed.',
+      audioFileId,
+      { mimeType: 'audio/mpeg' }
+    );
+
+    console.log('Success!');
+    console.log(`Response: ${response.substring(0, 200)}...`);
+
+    if (response.length > 10) {
+      console.log('\n✓ Test 21 PASSED');
+      return true;
+    } else {
+      console.log('\n✗ Test 21 FAILED: Empty or invalid response');
+      return false;
+    }
+  } catch (error) {
+    console.log(`✗ Test 21 FAILED: ${error.toString()}`);
+
+    // Provide helpful error messages
+    if (error.message && error.message.includes('No item with the given ID')) {
+      console.log('\nTroubleshooting:');
+      console.log('- Make sure the file ID is correct');
+      console.log('- Ensure you have permission to access the file');
+    }
+
     return false;
   }
 }
@@ -1081,7 +1132,8 @@ function runAllTests() {
     { name: 'Missing MIME Type', fn: test17_missingMimeType },
     { name: 'Multiple Images', fn: test18_multipleImages },
     { name: 'Multiple Files in Chat', fn: test19_multipleFilesInChat },
-    { name: 'Google Workspace Files', fn: test20_WorkspaceFiles }
+    { name: 'Google Workspace Files', fn: test20_WorkspaceFiles },
+    { name: 'Direct Drive File ID', fn: test21_driveFileId }
   ];
 
   let passed = 0;
