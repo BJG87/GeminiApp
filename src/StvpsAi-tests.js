@@ -6,7 +6,8 @@
  * 
  * Setup:
  * 1. Set Script Property 'GEMINI_API_KEY' with your API key
- * 2. Run individual test functions or runAllTests()
+ * 2. (Optional) Set 'TEST_AUDIO_FILE_ID' with your Drive audio file ID for tests 6, 7, 8, 12
+ * 3. Run individual test functions or runAllTests()
  */
 
 // Get API key from Script Properties
@@ -19,6 +20,11 @@ function getApiKey() {
     );
   }
   return key;
+}
+
+// Get optional test audio file ID from Script Properties
+function getTestAudioFileId() {
+  return PropertiesService.getScriptProperties().getProperty('TEST_AUDIO_FILE_ID');
 }
 
 // ============================================================================
@@ -229,34 +235,38 @@ function test5_promptWithImageStructured() {
 // ============================================================================
 
 /**
- * Test 6: Prompt with audio file URL
- * Tests audio transcription from URL
+ * Test 6: Prompt with audio file from Drive
+ * Tests audio transcription from Drive file
  * 
- * Note: Skipped because we need a small (<5MB) public audio file.
- * To test with your own audio file, uncomment and replace the URL.
+ * Setup: Set TEST_AUDIO_FILE_ID in Script Properties with your audio file ID
  */
 function test6_promptWithAudioUrl() {
-  console.log('=== Test 6: Prompt with Audio URL ===');
-  console.log('⚠ Test 6 SKIPPED: No small public audio file available for testing');
-  console.log('To test: uncomment code and use your own audio file URL (<5MB)');
-  return true;
-  
-  /* Uncomment and modify to test with your own audio file:
-  
+  console.log('=== Test 6: Prompt with Audio File ===');
+
+  const audioFileId = getTestAudioFileId();
+  if (!audioFileId) {
+    console.log('⚠ Test 6 SKIPPED: No TEST_AUDIO_FILE_ID configured');
+    console.log('To enable: PropertiesService.getScriptProperties().setProperty("TEST_AUDIO_FILE_ID", "your-file-id");');
+    return true;
+  }
+
   try {
     const ai = StvpsAi.newInstance(getApiKey());
 
-    // Replace with your own small audio file URL (<5MB recommended)
-    const audioUrl = 'YOUR_AUDIO_URL_HERE';
+    // Upload from Drive (fast and reliable)
+    const driveFile = DriveApp.getFileById(audioFileId);
+    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
 
     const response = ai.promptWithFile(
-      'What is being said in this audio?',
-      audioUrl,
-      { mimeType: 'audio/mpeg' }
+      'What is being said in this audio? Provide a brief summary.',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
     );
 
     console.log('Success!');
-    console.log('Response:', response);
+    console.log('Response:', response.substring(0, 200) + '...');
+    
+    // Clean up
+    ai.getFileManager().deleteFile(uploadedFile.name);
 
     console.log('✓ Test 6 PASSED\n');
     return true;
@@ -264,33 +274,104 @@ function test6_promptWithAudioUrl() {
     console.log('✗ Test 6 FAILED:', error.toString());
     return false;
   }
-  */
 }
 
 /**
  * Test 7: Prompt with audio file + structured output
  * Tests audio transcription with JSON schema
  * 
- * Note: Skipped - requires small audio file for testing.
- * Uncomment and provide your own audio file URL to test.
+ * Setup: Set TEST_AUDIO_FILE_ID in Script Properties
  */
 function test7_promptWithAudioStructured() {
   console.log('=== Test 7: Prompt with Audio + Structured Output ===');
-  console.log('⚠ Test 7 SKIPPED: Provide your own small audio file (<5MB) to test');
-  return true;
+
+  const audioFileId = getTestAudioFileId();
+  if (!audioFileId) {
+    console.log('⚠ Test 7 SKIPPED: No TEST_AUDIO_FILE_ID configured');
+    return true;
+  }
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    const driveFile = DriveApp.getFileById(audioFileId);
+    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+
+    const schema = {
+      type: 'object',
+      properties: {
+        summary: { type: 'string', description: 'Brief summary of the audio' },
+        topics: { type: 'array', items: { type: 'string' }, description: 'Key topics discussed' }
+      },
+      required: ['summary', 'topics']
+    };
+
+    const response = ai.promptWithFile(
+      'Analyze this audio and extract the summary and key topics',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType },
+      { schema }
+    );
+
+    console.log('Success!');
+    console.log('Summary:', response.summary);
+    console.log('Topics:', response.topics);
+    
+    // Clean up
+    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    console.log('✓ Test 7 PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 7 FAILED:', error.toString());
+    return false;
+  }
 }
 
 /**
- * Test 8: Prompt with Google Drive audio URL  
- * Tests with a Google Drive direct download link
+ * Test 8: Multiple prompts with same Drive audio file
+ * Tests reusing an uploaded file multiple times
  * 
- * Note: Skipped - requires small audio file for testing.
- * Uncomment and provide your own Drive audio URL to test.
+ * Setup: Set TEST_AUDIO_FILE_ID in Script Properties
  */
 function test8_promptWithDriveAudioUrl() {
-  console.log('=== Test 8: Prompt with Google Drive Audio URL ===');
-  console.log('⚠ Test 8 SKIPPED: Provide your own Drive audio file to test');
-  return true;
+  console.log('=== Test 8: Reuse Uploaded Audio File ===');
+
+  const audioFileId = getTestAudioFileId();
+  if (!audioFileId) {
+    console.log('⚠ Test 8 SKIPPED: No TEST_AUDIO_FILE_ID configured');
+    return true;
+  }
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    // Upload once
+    const driveFile = DriveApp.getFileById(audioFileId);
+    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+    console.log('File uploaded:', uploadedFile.uri);
+
+    // Use multiple times
+    const response1 = ai.promptWithFile(
+      'What is the main topic of this audio?',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+    console.log('Response 1:', response1.substring(0, 100) + '...');
+
+    const response2 = ai.promptWithFile(
+      'List 3 key points from this audio',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+    console.log('Response 2:', response2.substring(0, 100) + '...');
+    
+    // Clean up
+    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    console.log('✓ Test 8 PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 8 FAILED:', error.toString());
+    return false;
+  }
 }
 
 // ============================================================================
@@ -395,17 +476,48 @@ function test11_chatWithImage() {
 }
 
 /**
- * Test 12: Chat with file
- * Tests sending files in chat context
+ * Test 12: Chat with audio file
+ * Tests sending audio file in chat context
  * 
- * Note: Skipped - requires small file for testing.
- * Test 11 already demonstrates chat with files using an image.
+ * Setup: Set TEST_AUDIO_FILE_ID in Script Properties
  */
 function test12_chatWithFile() {
-  console.log('=== Test 12: Chat with File ===');
-  console.log('⚠ Test 12 SKIPPED: Provide your own small file to test');
-  console.log('Note: Test 11 demonstrates chat with image files');
-  return true;
+  console.log('=== Test 12: Chat with Audio File ===');
+
+  const audioFileId = getTestAudioFileId();
+  if (!audioFileId) {
+    console.log('⚠ Test 12 SKIPPED: No TEST_AUDIO_FILE_ID configured');
+    return true;
+  }
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+    const chat = ai.startChat();
+
+    // Upload audio file
+    const driveFile = DriveApp.getFileById(audioFileId);
+    const uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
+
+    // First turn: Ask about the audio
+    const response1 = chat.sendMessageWithFile(
+      'What is this audio about? Give a brief summary.',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+    console.log('Turn 1:', response1.substring(0, 100) + '...');
+
+    // Second turn: Follow-up question (chat should remember the audio)
+    const response2 = chat.sendMessage('What are the main themes discussed?');
+    console.log('Turn 2:', response2.substring(0, 100) + '...');
+    
+    // Clean up
+    ai.getFileManager().deleteFile(uploadedFile.name);
+
+    console.log('✓ Test 12 PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 12 FAILED:', error.toString());
+    return false;
+  }
 }
 
 /**
