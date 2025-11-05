@@ -251,18 +251,38 @@ class _StvpsAiFileManager {
     const url = `${this.filesBaseUrl}/${fileName.replace('files/', '')}?key=${this.apiKey}`;
     const options = {
       method: 'delete',
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
+      timeout: 10 // 10 second timeout for delete operations
     };
     
-    const response = UrlFetchApp.fetch(url, options); // Don't use retry for delete - fast fail
+    try {
+      const response = UrlFetchApp.fetch(url, options);
+      const statusCode = response.getResponseCode();
 
-    if (response.getResponseCode() !== 200 && response.getResponseCode() !== 204) {
+      // Success
+      if (statusCode === 200 || statusCode === 204) {
+        return;
+      }
+
+      // Already deleted / not found - treat as success
+      if (statusCode === 404) {
+        return;
+      }
+
+      // Other errors
       const data = JSON.parse(response.getContentText());
       throw new StvpsAiApiError(
         `Failed to delete file: ${data.error?.message || 'Unknown error'}`,
-        response.getResponseCode(),
+        statusCode,
         data
       );
+    } catch (error) {
+      // If it's already our error, re-throw
+      if (error instanceof StvpsAiApiError) {
+        throw error;
+      }
+      // Network timeout or other error - log and continue
+      console.log(`Warning: Could not delete ${fileName}: ${error.message}`);
     }
   }
 
