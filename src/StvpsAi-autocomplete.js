@@ -37,187 +37,37 @@
  */
 
 /**
- * StvpsAi instance with all methods
- * @class
+ * @typedef {Object} StvpsAiInstance
+ * @property {function(string, PromptOptions=): (string|Object)} prompt - Send a simple text prompt
+ * @property {function(string, (Blob|string), PromptOptions=): (string|Object)} promptWithImage - Send a prompt with an image
+ * @property {function(string, (FileInput|Blob|string), PromptOptions=): (string|Object)} promptWithFile - Send a prompt with a file
+ * @property {function(Object=): ChatSession} startChat - Start a chat session
+ * @property {function(string, string, string=): UploadedFile} uploadFile - Upload a file from URL
+ * @property {function((GoogleAppsScript.Drive.File|Blob), string=): UploadedFile} uploadDriveFile - Upload a Drive file
+ * @property {function(): FileManager} getFileManager - Get file manager instance
  */
-class StvpsAiInstance {
-  /**
-   * Send a simple text prompt
-   * @param {string} text - The prompt text
-   * @param {PromptOptions} [options] - Optional parameters (schema, temperature, etc.)
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  prompt(text, options) {}
-
-  /**
-   * Send a prompt with an image
-   * @param {string} text - The prompt text
-   * @param {Blob|string} imageInput - Image as Blob or URL string
-   * @param {PromptOptions} [options] - Optional parameters
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  promptWithImage(text, imageInput, options) {}
-
-  /**
-   * Send a prompt with a file (PDF, audio, video, etc.)
-   * @param {string} text - The prompt text
-   * @param {FileInput|Blob|string} fileInput - File as {uri, mimeType}, Blob, or URL
-   * @param {PromptOptions} [options] - Optional parameters
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  promptWithFile(text, fileInput, options) {}
-
-  /**
-   * Start a chat session with context
-   * @param {Object} [options] - Optional chat configuration
-   * @returns {ChatSession} Chat session instance
-   */
-  startChat(options) {}
-
-  /**
-   * Upload a file from URL to Gemini Files API
-   * @param {string} url - URL of the file
-   * @param {string} mimeType - MIME type (e.g., 'audio/mpeg')
-   * @param {string} [displayName] - Optional display name
-   * @returns {UploadedFile} Uploaded file info with uri property
-   */
-  uploadFile(url, mimeType, displayName) {}
-
-  /**
-   * Upload a Drive file to Gemini Files API
-   * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
-   * @param {string} [displayName] - Optional display name
-   * @returns {UploadedFile} Uploaded file info with uri property
-   */
-  uploadDriveFile(file, displayName) {}
-
-  /**
-   * Get file manager for advanced file operations
-   * @returns {FileManager} File manager instance
-   */
-  getFileManager() {}
-}
 
 /**
- * Chat session with context
- * @class
+ * @typedef {Object} ChatSession
+ * @property {function(string, PromptOptions=): (string|Object)} sendMessage - Send a text message
+ * @property {function(string, (Blob|string), PromptOptions=): (string|Object)} sendMessageWithImage - Send message with image
+ * @property {function(string, (FileInput|Blob|string), PromptOptions=): (string|Object)} sendMessageWithFile - Send message with file
+ * @property {function(): Array} getHistory - Get chat history
+ * @property {function(): void} clearHistory - Clear chat history
  */
-class ChatSession {
-  /**
-   * Send a text message in the chat
-   * @param {string} text - Message text
-   * @param {PromptOptions} [options] - Optional parameters
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  sendMessage(text, options) {}
-
-  /**
-   * Send a message with an image
-   * @param {string} text - Message text
-   * @param {Blob|string} imageInput - Image as Blob or URL
-   * @param {PromptOptions} [options] - Optional parameters
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  sendMessageWithImage(text, imageInput, options) {}
-
-  /**
-   * Send a message with a file
-   * @param {string} text - Message text
-   * @param {FileInput|Blob|string} fileInput - File input
-   * @param {PromptOptions} [options] - Optional parameters
-   * @returns {string|Object} Text response or JSON object if schema provided
-   */
-  sendMessageWithFile(text, fileInput, options) {}
-
-  /**
-   * Get chat history
-   * @returns {Array} Array of message objects
-   */
-  getHistory() {}
-
-  /**
-   * Clear chat history
-   */
-  clearHistory() {}
-}
 
 /**
- * File manager for file operations
- * @class
+ * @typedef {Object} FileManager
+ * @property {function(string, string, string=): UploadedFile} uploadFromUrl - Upload file from URL
+ * @property {function((GoogleAppsScript.Drive.File|Blob), string=): UploadedFile} uploadDriveFile - Upload Drive file
+ * @property {function(number=): Object} listFiles - List uploaded files
+ * @property {function(string): void} deleteFile - Delete a file
+ * @property {function(Array<string>, boolean=): Object} deleteFiles - Delete multiple files
+ * @property {function(number=): Object} deleteAllFiles - Delete all uploaded files
  */
-class FileManager {
-  /**
-   * Upload file from URL
-   * @param {string} url - File URL
-   * @param {string} mimeType - MIME type
-   * @param {string} [displayName] - Display name
-   * @returns {UploadedFile} Uploaded file info
-   */
-  uploadFromUrl(url, mimeType, displayName) {}
-
-  /**
-   * Upload Drive file
-   * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
-   * @param {string} [displayName] - Display name
-   * @returns {UploadedFile} Uploaded file info
-   */
-  uploadDriveFile(file, displayName) {}
-
-  /**
-   * List uploaded files
-   * @param {number} [maxResults] - Maximum number of files to return
-   * @returns {Object} Object with files array
-   */
-  listFiles(maxResults) {}
-
-  /**
-   * Delete a file
-   * @param {string} fileName - File name (e.g., 'files/abc123')
-   */
-  deleteFile(fileName) {}
-
-  /**
-   * Delete multiple files
-   * @param {Array<string>} fileNames - Array of file names
-   * @param {boolean} [showProgress] - Show progress during deletion
-   * @returns {Object} Result with success and failed arrays
-   */
-  deleteFiles(fileNames, showProgress) {}
-
-  /**
-   * Delete all uploaded files
-   * @param {number} [maxFiles] - Maximum files to delete (default: 100)
-   * @returns {Object} Result with deleted count and failed array
-   */
-  deleteAllFiles(maxFiles) {}
-}
 
 /**
- * Main StvpsAi namespace
- * @namespace StvpsAi
+ * Main StvpsAi namespace - DO NOT CALL ANYTHING FROM THIS FILE
+ * This file only provides IntelliSense/autocomplete support
+ * @namespace StvpsAiAutocomplete
  */
-var StvpsAi = {
-  /**
-   * Create a new StvpsAi instance
-   * @param {string} apiKey - Google AI API key
-   * @param {string} [model='gemini-2.5-flash'] - Model to use
-   * @returns {StvpsAiInstance} StvpsAi instance
-   * 
-   * @example
-   * const ai = StvpsAi.newInstance('YOUR_API_KEY');
-   * const response = ai.prompt('Hello!');
-   * 
-   * @example
-   * const ai = StvpsAi.newInstance('YOUR_API_KEY', 'gemini-1.5-pro');
-   */
-  newInstance: function(apiKey, model) {},
-  
-  /** Base error class */
-  Error: StvpsAiError,
-  
-  /** API error class */
-  ApiError: StvpsAiApiError,
-  
-  /** Validation error class */
-  ValidationError: StvpsAiValidationError
-};
