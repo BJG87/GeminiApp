@@ -895,6 +895,70 @@ function test17_missingMimeType() {
 }
 
 // ============================================================================
+// MULTIPLE FILES TEST
+// ============================================================================
+
+/**
+ * Test 18: Multiple Images in One Request
+ * Tests sending multiple images in a single prompt
+ */
+function test18_multipleImages() {
+  console.log('=== Test 18: Multiple Images ===');
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    // Two image URLs
+    const imageUrl1 = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
+    const imageUrl2 = 'https://storage.googleapis.com/generativeai-downloads/images/cake.jpg';
+    
+    // Test with array of images
+    const response = ai.promptWithImage(
+      'Compare these two images. What do they have in common and how are they different?',
+      [imageUrl1, imageUrl2],
+      { mimeType: ['image/jpeg', 'image/jpeg'] }
+    );
+
+    console.log('Response:', response.substring(0, 200) + '...');
+    console.log('✓ Test 18 PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 18 FAILED:', error.toString());
+    return false;
+  }
+}
+
+/**
+ * Test 19: Multiple Files in Chat
+ * Tests sending multiple files in a chat message
+ */
+function test19_multipleFilesInChat() {
+  console.log('=== Test 19: Multiple Files in Chat ===');
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+    const chat = ai.startChat();
+
+    // Two image URLs for comparison
+    const imageUrl1 = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
+    const imageUrl2 = 'https://storage.googleapis.com/generativeai-downloads/images/cake.jpg';
+    
+    const response = chat.sendMessageWithImage(
+      'What items are in these images?',
+      [imageUrl1, imageUrl2],
+      { mimeType: ['image/jpeg', 'image/jpeg'] }
+    );
+
+    console.log('Response:', response.substring(0, 200) + '...');
+    console.log('✓ Test 19 PASSED\n');
+    return true;
+  } catch (error) {
+    console.log('✗ Test 19 FAILED:', error.toString());
+    return false;
+  }
+}
+
+// ============================================================================
 // TEST RUNNER
 // ============================================================================
 
@@ -924,7 +988,9 @@ function runAllTests() {
     { name: 'Upload and Reuse File', fn: test14_uploadAndReuseFile },
     { name: 'List Files', fn: test15_listFiles },
     { name: 'Invalid API Key', fn: test16_invalidApiKey },
-    { name: 'Missing MIME Type', fn: test17_missingMimeType }
+    { name: 'Missing MIME Type', fn: test17_missingMimeType },
+    { name: 'Multiple Images', fn: test18_multipleImages },
+    { name: 'Multiple Files in Chat', fn: test19_multipleFilesInChat }
   ];
 
   let passed = 0;

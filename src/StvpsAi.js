@@ -496,38 +496,76 @@ class _StvpsAiChat {
    * Send a message with an image
    * 
    * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object} image - Image file, URL, or file URI object
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} image - Image file(s), URL(s), or file URI object(s)
    * @param {Object} [options] - Options
    * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string} [options.mimeType] - MIME type (required for URLs)
+   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
    * const chat = ai.startChat();
    * const response = chat.sendMessageWithImage('What is this?', imageUrl, { mimeType: 'image/jpeg' });
+   * 
+   * @example
+   * // Multiple images
+   * const response = chat.sendMessageWithImage('Compare these', [img1, img2], { mimeType: ['image/jpeg', 'image/png'] });
    */
   sendMessageWithImage(text, image, options = {}) {
-    const imagePart = this.ai._prepareFilePart(image, 'image', options.mimeType);
-    return this._sendMessage([{ text: text }, imagePart], options);
+    const parts = [{ text: text }];
+    
+    // Handle array of images
+    if (Array.isArray(image)) {
+      const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
+      image.forEach((img, index) => {
+        const mimeType = mimeTypes[index] || options.mimeType;
+        const imagePart = this.ai._prepareFilePart(img, 'image', mimeType);
+        parts.push(imagePart);
+      });
+    } else {
+      // Single image
+      const imagePart = this.ai._prepareFilePart(image, 'image', options.mimeType);
+      parts.push(imagePart);
+    }
+    
+    return this._sendMessage(parts, options);
   }
 
   /**
    * Send a message with a file (PDF, audio, video, etc.)
    * 
    * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object} file - File, URL, or file URI object
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s), URL(s), or file URI object(s)
    * @param {Object} [options] - Options
    * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string} [options.mimeType] - MIME type (required for URLs)
+   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
    * const chat = ai.startChat();
    * const response = chat.sendMessageWithFile('Transcribe this', audioFile);
+   * 
+   * @example
+   * // Multiple files
+   * const response = chat.sendMessageWithFile('Compare these', [file1, file2], { mimeType: ['audio/mpeg', 'audio/wav'] });
    */
   sendMessageWithFile(text, file, options = {}) {
-    const filePart = this.ai._prepareFilePart(file, 'file', options.mimeType);
-    return this._sendMessage([{ text: text }, filePart], options);
+    const parts = [{ text: text }];
+    
+    // Handle array of files
+    if (Array.isArray(file)) {
+      const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
+      file.forEach((f, index) => {
+        const mimeType = mimeTypes[index] || options.mimeType;
+        const filePart = this.ai._prepareFilePart(f, 'file', mimeType);
+        parts.push(filePart);
+      });
+    } else {
+      // Single file
+      const filePart = this.ai._prepareFilePart(file, 'file', options.mimeType);
+      parts.push(filePart);
+    }
+    
+    return this._sendMessage(parts, options);
   }
 
   /**
@@ -680,15 +718,15 @@ class _StvpsAi {
    * Send a prompt with an image
    * 
    * @param {string} text - The prompt text
-   * @param {Blob|string} image - Image as Blob or URL string
+   * @param {Blob|string|Array<Blob|string>} image - Image(s) as Blob, URL string, or array of either
    * @param {Object} [options] - Options
-   * @param {string} [options.mimeType] - MIME type (required if image is a URL string)
+   * @param {string} [options.mimeType] - MIME type (required if image is a URL string, or array of mimeTypes if multiple images)
    * @param {Object} [options.schema] - JSON schema for structured response
    * @param {string} [options.model] - Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
-   * // Analyze image
+   * // Analyze single image
    * const response = ai.promptWithImage('What is in this image?', imageBlob);
    * console.log(response);
    * 
@@ -699,13 +737,35 @@ class _StvpsAi {
    *   'https://example.com/image.jpg',
    *   { mimeType: 'image/jpeg' }
    * );
+   * 
+   * @example
+   * // With multiple images
+   * const response = ai.promptWithImage(
+   *   'Compare these images',
+   *   [url1, url2],
+   *   { mimeType: ['image/jpeg', 'image/png'] }
+   * );
    */
   promptWithImage(text, image, options = {}) {
-    const imagePart = this._prepareFilePart(image, 'image', options.mimeType);
+    const parts = [{ text: text }];
+    
+    // Handle array of images
+    if (Array.isArray(image)) {
+      const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
+      image.forEach((img, index) => {
+        const mimeType = mimeTypes[index] || options.mimeType;
+        const imagePart = this._prepareFilePart(img, 'image', mimeType);
+        parts.push(imagePart);
+      });
+    } else {
+      // Single image
+      const imagePart = this._prepareFilePart(image, 'image', options.mimeType);
+      parts.push(imagePart);
+    }
 
     const request = {
       contents: [{
-        parts: [{ text: text }, imagePart]
+        parts: parts
       }],
       generationConfig: {}
     };
@@ -723,9 +783,9 @@ class _StvpsAi {
    * Send a prompt with a file (PDF, audio, video, etc.)
    * 
    * @param {string} text - The prompt text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object} file - File as Drive file, Blob, URL string, or file URI object
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s) as Drive file, Blob, URL string, file URI object, or array of any
    * @param {Object} [options] - Options
-   * @param {string} options.mimeType - MIME type (required if file is a URL string)
+   * @param {string|Array<string>} options.mimeType - MIME type (required if file is a URL string, or array of mimeTypes if multiple files)
    * @param {Object} [options.schema] - JSON schema for structured response
    * @param {string} [options.model] - Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
@@ -749,13 +809,35 @@ class _StvpsAi {
    *     required: ['summary', 'keyPoints']
    *   }
    * });
+   * 
+   * @example
+   * // Multiple files
+   * const response = ai.promptWithFile(
+   *   'Compare these documents',
+   *   [pdfUrl1, pdfUrl2],
+   *   { mimeType: ['application/pdf', 'application/pdf'] }
+   * );
    */
   promptWithFile(text, file, options = {}) {
-    const filePart = this._prepareFilePart(file, 'file', options.mimeType);
+    const parts = [{ text: text }];
+    
+    // Handle array of files
+    if (Array.isArray(file)) {
+      const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
+      file.forEach((f, index) => {
+        const mimeType = mimeTypes[index] || options.mimeType;
+        const filePart = this._prepareFilePart(f, 'file', mimeType);
+        parts.push(filePart);
+      });
+    } else {
+      // Single file
+      const filePart = this._prepareFilePart(file, 'file', options.mimeType);
+      parts.push(filePart);
+    }
 
     const request = {
       contents: [{
-        parts: [{ text: text }, filePart]
+        parts: parts
       }],
       generationConfig: {}
     };
