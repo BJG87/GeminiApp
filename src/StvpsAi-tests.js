@@ -53,6 +53,42 @@ function cleanupAllTestFiles() {
   }
 }
 
+/**
+ * List all uploaded files without creating new ones
+ * Useful for checking what files exist before cleanup
+ */
+function listUploadedFiles() {
+  console.log('=== Listing Uploaded Files ===');
+  
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+    const fileManager = ai.getFileManager();
+    
+    const filesList = fileManager.listFiles(100);
+    const count = filesList.files?.length || 0;
+    
+    console.log(`\nTotal files: ${count}`);
+    
+    if (count === 0) {
+      console.log('No files found.');
+    } else {
+      console.log('\nFiles:');
+      filesList.files.forEach((file, index) => {
+        console.log(`${index + 1}. ${file.displayName || 'unnamed'}`);
+        console.log(`   ID: ${file.name}`);
+        console.log(`   Type: ${file.mimeType}`);
+        console.log(`   Size: ${(file.sizeBytes / 1024).toFixed(2)} KB`);
+        console.log(`   Created: ${file.createTime}`);
+        console.log('');
+      });
+    }
+    
+    console.log('✓ List complete\n');
+  } catch (error) {
+    console.log('✗ List failed:', error.toString());
+  }
+}
+
 // ============================================================================
 // BASIC PROMPT TESTS
 // ============================================================================
