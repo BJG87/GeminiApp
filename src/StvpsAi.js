@@ -70,7 +70,7 @@
  * }
  * 
  * // Set concurrency (how many jobs run simultaneously)
- * StvpsAi.JobQueue.setConcurrentJobs(3); // Default is 1
+ * StvpsAi.JobQueue.setMaxConcurrentJobs(3); // Default is 1
  * 
  * // Check queue status
  * const stats = StvpsAi.JobQueue.getQueueStats();
@@ -1584,5 +1584,17 @@ var StvpsAi = {
   newInstance: newInstance,
   Error: StvpsAiError,
   ApiError: StvpsAiApiError,
-  ValidationError: StvpsAiValidationError
+  ValidationError: StvpsAiValidationError,
+  JobQueue: {
+    processJobs: processJobs,
+    addJob: addJob,
+    addJobs: addJobs,
+    setMaxConcurrentJobs: setMaxConcurrentJobs,
+    getMaxConcurrentJobs: getMaxConcurrentJobs,
+    startProcessingJobs: startProcessingJobs,
+    stopProcessingJobs: stopProcessingJobs,
+    listFailedJobs: listFailedJobs,
+    clearFailedJobs: clearFailedJobs,
+    removeFailedJob: removeFailedJob
+  }
 };
