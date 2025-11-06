@@ -39,11 +39,12 @@
 /**
  * @typedef {Object} StvpsAiInstance
  * @property {function(string, PromptOptions=): (string|Object)} prompt - Send a simple text prompt
- * @property {function(string, (Blob|string), PromptOptions=): (string|Object)} promptWithImage - Send a prompt with an image
- * @property {function(string, (FileInput|Blob|string), PromptOptions=): (string|Object)} promptWithFile - Send a prompt with a file
+ * @property {function(string, (Blob|string|Array<Blob|string>), PromptOptions=): (string|Object)} promptWithImage - Send a prompt with image(s)
+ * @property {function(string, (FileInput|Blob|string|Array<FileInput|Blob|string>), PromptOptions=): (string|Object)} promptWithFile - Send a prompt with file(s)
  * @property {function(Object=): ChatSession} startChat - Start a chat session
- * @property {function(string, string, string=): UploadedFile} uploadFile - Upload a file from URL
+ * @property {function(string, string=, string=): UploadedFile} uploadFile - Upload a file from URL or Drive ID
  * @property {function((GoogleAppsScript.Drive.File|Blob), string=): UploadedFile} uploadDriveFile - Upload a Drive file
+ * @property {function(string): Object} deleteFile - Delete an uploaded file
  * @property {function(): FileManager} getFileManager - Get file manager instance
  */
 

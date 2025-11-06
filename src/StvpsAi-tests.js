@@ -1106,7 +1106,7 @@ function test21_driveFileId() {
 function test22_uploadFileWithDriveId() {
   console.log('=== Test 22: Upload File with Drive ID ===');
 
-  const docFileId = '1c2MgyLeV4cLIzj12jSJTH9gqTkjKn0kbsLmqSHCf6Js'; // Public test doc
+  const docFileId = '1DrnwWmoNPfo4TKgacPwn1qEbY5nlzFec'; // Public test doc
 
   try {
     const ai = StvpsAi.newInstance(getApiKey());

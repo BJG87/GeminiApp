@@ -1175,6 +1175,23 @@ class _StvpsAi {
   }
 
   /**
+   * Delete a file from the Files API
+   * 
+   * @param {string} fileUri - File URI or name (e.g., 'files/abc123' or full URI)
+   * @returns {Object} Result with success property
+   * 
+   * @example
+   * const file = ai.uploadFile('https://example.com/image.jpg', 'image/jpeg');
+   * // ... use the file ...
+   * ai.deleteFile(file.name); // or ai.deleteFile(file.uri)
+   */
+  deleteFile(fileUri) {
+    // Extract file name from URI if needed
+    const fileName = fileUri.includes('/') ? fileUri.split('/').pop() : fileUri;
+    return this.fileManager.deleteFile(fileName);
+  }
+
+  /**
    * Get access to the file manager for advanced operations
    * @returns {_StvpsAiFileManager} File manager instance
    */
