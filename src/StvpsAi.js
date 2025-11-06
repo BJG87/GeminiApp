@@ -73,8 +73,9 @@
  * StvpsAi.JobQueue.setMaxConcurrentJobs(3); // Default is 1
  * 
  * // Check queue status
- * const stats = StvpsAi.JobQueue.getQueueStats();
- * console.log('Jobs pending:', stats.pending);
+ * const status = StvpsAi.JobQueue.getQueueStatus();
+ * console.log('Jobs queued:', status.queuedCount);
+ * console.log('Jobs running:', status.runningCount);
  * 
  * RETURN TYPES:
  * -------------
@@ -1586,13 +1587,25 @@ var StvpsAi = {
   ApiError: StvpsAiApiError,
   ValidationError: StvpsAiValidationError,
   JobQueue: {
+    // Core queue management
     processJobs: processJobs,
     addJob: addJob,
     addJobs: addJobs,
+    
+    // Configuration
     setMaxConcurrentJobs: setMaxConcurrentJobs,
     getMaxConcurrentJobs: getMaxConcurrentJobs,
+    
+    // Trigger control
     startProcessingJobs: startProcessingJobs,
     stopProcessingJobs: stopProcessingJobs,
+    
+    // Queue status and utilities
+    getQueueStatus: getQueueStatus,
+    clearJobQueue: clearJobQueue,
+    clearRunningJobs: clearRunningJobs,
+    
+    // Failed jobs management
     listFailedJobs: listFailedJobs,
     clearFailedJobs: clearFailedJobs,
     removeFailedJob: removeFailedJob
