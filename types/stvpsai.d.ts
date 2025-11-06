@@ -240,7 +240,7 @@ declare namespace StvpsAi {
      * const uploaded = ai.uploadFile(driveFileId);
      * const response = ai.promptWithFile("Analyze this", { uri: uploaded.uri, mimeType: uploaded.mimeType });
      */
-    uploadFile(file: string | GoogleAppsScript.Base.Blob, options?: { mimeType?: string }): UploadedFile;
+    uploadFile(file: string | Blob | any, options?: { mimeType?: string }): UploadedFile;
 
     /**
      * Get metadata for an uploaded file
