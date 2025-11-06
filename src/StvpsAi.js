@@ -49,6 +49,29 @@
  * chat.sendMessage('Hello');
  * chat.sendMessage('Tell me more');
  * 
+ * RETURN TYPES:
+ * -------------
+ * All methods return:
+ * - string: when NO schema is provided (plain text response)
+ * - Object: when schema is provided (parsed JSON object)
+ * 
+ * This applies to ALL prompt and chat methods:
+ * - prompt() / sendMessage()
+ * - promptWithImage() / sendMessageWithImage()
+ * - promptWithFile() / sendMessageWithFile()
+ * 
+ * IMPORTANT: Schema Parameter Placement
+ * --------------------------------------
+ * For methods with multiple parameters, the schema ALWAYS goes in the OPTIONS parameter (last):
+ * 
+ * CORRECT:
+ *   ai.promptWithFile(text, file, { schema })  ✓
+ *   chat.sendMessageWithFile(text, file, { schema })  ✓
+ * 
+ * INCORRECT:
+ *   ai.promptWithFile(text, { file, schema })  ✗
+ *   chat.sendMessageWithFile(text, { file, schema })  ✗
+ * 
  * @typedef {Object} FileInput
  * @property {string} uri - File URI from uploadFile() or uploadDriveFile()
  * @property {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4')
@@ -729,6 +752,11 @@ class _StvpsAiChat {
    * @example
    * // Multiple images
    * const response = chat.sendMessageWithImage('Compare these', [img1, img2], { mimeType: ['image/jpeg', 'image/png'] });
+   * 
+   * @example
+   * // With structured output
+   * const schema = { type: 'object', properties: { objects: { type: 'array', items: { type: 'string' } } } };
+   * const response = chat.sendMessageWithImage('List objects in image', imageBlob, { schema });
    */
   sendMessageWithImage(text, image, options = {}) {
     const parts = [{ text: text }];
@@ -771,6 +799,16 @@ class _StvpsAiChat {
    * @example
    * // Multiple files
    * const response = chat.sendMessageWithFile('Compare these', [file1, file2], { mimeType: ['audio/mpeg', 'audio/wav'] });
+   * 
+   * @example
+   * // With structured output (schema)
+   * const uploadedFile = ai.uploadFile(myBlob, 'audio/mpeg');
+   * const schema = { type: 'object', properties: { transcription: { type: 'string' } } };
+   * const response = chat.sendMessageWithFile(
+   *   'Transcribe this audio',
+   *   { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType },
+   *   { schema }  // Schema goes in third parameter, not second!
+   * );
    */
   sendMessageWithFile(text, file, options = {}) {
     const parts = [{ text: text }];
