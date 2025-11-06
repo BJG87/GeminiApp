@@ -526,9 +526,9 @@ class _StvpsAiFileManager {
         const result = this.deleteFile(fileName);
         results.success.push(fileName);
         
-        // Small delay to avoid rate limiting
+        // Delay to avoid rate limiting
         if (i < total - 1) {
-          Utilities.sleep(200); // 200ms between deletes
+          Utilities.sleep(1000); // 1 second between deletes to avoid rate limits
         }
       } catch (error) {
         results.failed.push({ fileName, error: error.message });
@@ -1119,24 +1119,40 @@ class _StvpsAi {
   }
 
   /**
-   * Upload a file from URL to Files API
+   * Upload a file from URL or Drive ID to Files API
    * Returns a file object with URI that can be reused
    * 
-   * @param {string} url - URL of the file
-   * @param {string} mimeType - MIME type
+   * @param {string} urlOrId - URL of the file or Google Drive file ID
+   * @param {string} [mimeType] - MIME type (required for URLs, not needed for Drive IDs)
    * @param {string} [displayName] - Optional display name
    * @returns {Object} File object with uri, name, mimeType, etc.
    * 
    * @example
+   * // From URL
    * const file = ai.uploadFile('https://example.com/large-video.mp4', 'video/mp4');
+   * 
+   * // From Drive ID (mimeType not needed)
+   * const file = ai.uploadFile('1abc...xyz');
+   * 
    * // Later use the file URI
    * const response = ai.promptWithFile('Describe this video', {
    *   uri: file.uri,
    *   mimeType: file.mimeType
    * });
    */
-  uploadFile(url, mimeType, displayName) {
-    return this.fileManager.uploadFromUrl(url, mimeType, displayName);
+  uploadFile(urlOrId, mimeType, displayName) {
+    // Check if it's a Drive file ID (not a URL)
+    if (this._isDriveFileId(urlOrId)) {
+      try {
+        const driveFile = DriveApp.getFileById(urlOrId);
+        return this.fileManager.uploadDriveFile(driveFile, displayName);
+      } catch (e) {
+        throw new StvpsAiValidationError(`Failed to access Drive file with ID '${urlOrId}': ${e.message}`);
+      }
+    }
+    
+    // It's a URL
+    return this.fileManager.uploadFromUrl(urlOrId, mimeType, displayName);
   }
 
   /**

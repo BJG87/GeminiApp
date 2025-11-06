@@ -1099,6 +1099,68 @@ function test21_driveFileId() {
   }
 }
 
+/**
+ * Test 22: Upload File using Drive ID
+ * Tests uploadFile() method with a Drive file ID
+ */
+function test22_uploadFileWithDriveId() {
+  console.log('=== Test 22: Upload File with Drive ID ===');
+
+  const docFileId = '1c2MgyLeV4cLIzj12jSJTH9gqTkjKn0kbsLmqSHCf6Js'; // Public test doc
+
+  try {
+    const ai = StvpsAi.newInstance(getApiKey());
+
+    console.log(`Uploading file with Drive ID: ${docFileId}`);
+    console.log('Note: No mimeType needed when using Drive ID\n');
+
+    // Upload the file using just the Drive ID (no mimeType needed)
+    const uploadedFile = ai.uploadFile(docFileId);
+
+    console.log('Upload complete!');
+    console.log('File URI:', uploadedFile.uri);
+    console.log('File name:', uploadedFile.name);
+    console.log('MIME type:', uploadedFile.mimeType);
+
+    // Use the uploaded file in a prompt
+    console.log('\nUsing uploaded file...');
+    const response1 = ai.promptWithFile(
+      'What is the title of this document?',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+
+    console.log('Response 1:', response1);
+
+    // Reuse the same uploaded file
+    console.log('\nReusing the same uploaded file...');
+    const response2 = ai.promptWithFile(
+      'Summarize this document in one sentence.',
+      { uri: uploadedFile.uri, mimeType: uploadedFile.mimeType }
+    );
+
+    console.log('Response 2:', response2.substring(0, 150) + '...');
+
+    // Clean up
+    console.log('\nDeleting uploaded file...');
+    ai.deleteFile(uploadedFile.name);
+    console.log('File deleted');
+
+    console.log('\n✓ Test 22 PASSED');
+    return true;
+  } catch (error) {
+    console.log(`✗ Test 22 FAILED: ${error.toString()}`);
+
+    if (error.message && error.message.includes('Failed to access Drive file')) {
+      console.log('\nTroubleshooting:');
+      console.log('- Make sure the Drive file ID is correct');
+      console.log('- Ensure you have permission to access the file');
+      console.log('- Try opening the file in Drive to verify access');
+    }
+
+    return false;
+  }
+}
+
 // ============================================================================
 // TEST RUNNER
 // ============================================================================
@@ -1133,7 +1195,8 @@ function runAllTests() {
     { name: 'Multiple Images', fn: test18_multipleImages },
     { name: 'Multiple Files in Chat', fn: test19_multipleFilesInChat },
     { name: 'Google Workspace Files', fn: test20_WorkspaceFiles },
-    { name: 'Direct Drive File ID', fn: test21_driveFileId }
+    { name: 'Direct Drive File ID', fn: test21_driveFileId },
+    { name: 'Upload File with Drive ID', fn: test22_uploadFileWithDriveId }
   ];
 
   let passed = 0;
