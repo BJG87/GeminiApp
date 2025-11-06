@@ -1425,6 +1425,35 @@ class _StvpsAi {
 
     return text;
   }
+
+  /**
+   * Check if a string is a Google Drive file ID (not a URL)
+   * @private
+   * @param {string} str - String to check
+   * @returns {boolean} True if it's a Drive file ID
+   */
+  _isDriveFileId(str) {
+    // Drive IDs are typically 25-50 alphanumeric characters with hyphens/underscores
+    // and don't contain slashes, colons, or dots (which URLs have)
+    return /^[A-Za-z0-9_-]{20,}$/.test(str) && 
+           !str.includes('/') && 
+           !str.includes(':') && 
+           !str.includes('.');
+  }
+
+  /**
+   * Check if a URL is a Google Workspace URL
+   * @private
+   * @param {string} url - URL to check
+   * @returns {boolean} True if it's a Google Workspace URL
+   */
+  _isGoogleWorkspaceUrl(url) {
+    return url.includes('docs.google.com/') || 
+           url.includes('drive.google.com/') ||
+           url.includes('sheets.google.com/') ||
+           url.includes('slides.google.com/') ||
+           url.includes('forms.google.com/');
+  }
 }
 
 // ============================================================================
