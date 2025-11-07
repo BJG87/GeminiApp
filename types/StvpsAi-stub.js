@@ -12,27 +12,182 @@
  */
 
 /**
- * @typedef {Object} StvpsAiInstance
- * @property {function(string, {schema: Object=, model: string=}=): (string|Object)} prompt - Send a text-only prompt
- * @property {function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithImage - Send a prompt with image(s)
- * @property {function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithFile - Send a prompt with file(s)
- * @property {function(): ChatSession} startChat - Start a chat session
- * @property {function(Blob|string, string, string=): {uri: string, name: string, mimeType: string}} uploadFile - Upload a file to Gemini API
- * @property {function(string, string, string=): {uri: string, name: string, mimeType: string}} uploadFileFromUrl - Upload a file from URL
- * @property {function(string): void} deleteFile - Delete an uploaded file
- * @property {function(Array<string>, boolean=): {deleted: Array<string>, failed: Array<{name: string, error: string}>}} deleteFiles - Delete multiple files
- * @property {function(number=): {deleted: number, failed: number}} deleteAllFiles - Delete all uploaded files
- * @property {function(number=): Array<{name: string, uri: string, mimeType: string, sizeBytes: number, createTime: string}>} listFiles - List uploaded files
- * @property {Object} fileManager - Direct access to file manager
+ * @typedef {Object} PromptOptions
+ * @property {Object} [schema] - JSON schema for structured output
+ * @property {string} [model] - Override default model
  */
 
 /**
- * @typedef {Object} ChatSession
- * @property {function(string, {schema: Object=}=): (string|Object)} sendMessage - Send a text message in chat
- * @property {function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object)} sendMessageWithImage - Send a message with image(s)
- * @property {function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object)} sendMessageWithFile - Send a message with file(s)
- * @property {Array<Object>} history - Chat history
+ * @typedef {Object} FileOptions
+ * @property {string|Array<string>} [mimeType] - MIME type(s) for file(s)
+ * @property {Object} [schema] - JSON schema for structured output
+ * @property {string} [model] - Override default model
  */
+
+/**
+ * @typedef {Object} UploadedFile
+ * @property {string} uri - File URI for use in prompts
+ * @property {string} name - File name/ID
+ * @property {string} mimeType - File MIME type
+ */
+
+/**
+ * @typedef {Object} DeleteResult
+ * @property {Array<string>} deleted - Successfully deleted file names
+ * @property {Array<{name: string, error: string}>} failed - Failed deletions
+ */
+
+/**
+ * @typedef {Object} FileInfo
+ * @property {string} name - File name/ID
+ * @property {string} uri - File URI
+ * @property {string} mimeType - File MIME type
+ * @property {number} sizeBytes - File size in bytes
+ * @property {string} createTime - Creation timestamp
+ */
+
+/**
+ * @typedef {_StvpsAiInstanceStub} StvpsAiInstance
+ */
+
+/**
+ * @typedef {_ChatSessionStub} ChatSession
+ */
+
+/**
+ * Instance method stubs (for autocomplete)
+ * @class
+ */
+class _StvpsAiInstanceStub {
+  /**
+   * Send a text-only prompt to the AI
+   * @param {string} text - The prompt text
+   * @param {PromptOptions} [options] - Optional configuration
+   * @returns {string|Object} Response text or parsed JSON object
+   * @example
+   * const response = ai.prompt('Hello!');
+   * const json = ai.prompt('List 3 colors', { schema: { colors: ['string'] } });
+   */
+  prompt(text, options) {}
+  
+  /**
+   * Send a prompt with one or more images
+   * @param {string} text - The prompt text
+   * @param {Blob|string|Array<Blob|string>} images - Image(s) as Blob, URL, Drive ID, or array
+   * @param {FileOptions} [options] - Optional configuration including mimeType
+   * @returns {string|Object} Response text or parsed JSON object
+   * @example
+   * const response = ai.promptWithImage('What is in this image?', imageBlob);
+   * const response = ai.promptWithImage('Compare these', [url1, url2], { mimeType: ['image/jpeg', 'image/png'] });
+   */
+  promptWithImage(text, images, options) {}
+  
+  /**
+   * Send a prompt with one or more files (PDF, audio, video, etc.)
+   * @param {string} text - The prompt text
+   * @param {Blob|string|Object|Array<Blob|string|Object>} files - File(s) as Blob, URL, Drive ID, {uri, mimeType}, or array
+   * @param {FileOptions} [options] - Optional configuration including mimeType
+   * @returns {string|Object} Response text or parsed JSON object
+   * @example
+   * const response = ai.promptWithFile('Summarize this PDF', pdfBlob, { mimeType: 'application/pdf' });
+   * const response = ai.promptWithFile('Transcribe', audioUrl, { mimeType: 'audio/mpeg' });
+   */
+  promptWithFile(text, files, options) {}
+  
+  /**
+   * Start a new chat session
+   * @returns {_ChatSessionStub} Chat session instance
+   * @example
+   * const chat = ai.startChat();
+   * const response1 = chat.sendMessage('Hello!');
+   * const response2 = chat.sendMessage('Tell me more');
+   */
+  startChat() {}
+  
+  /**
+   * Upload a file to Gemini API for reuse
+   * @param {Blob|string} file - File as Blob or Drive ID
+   * @param {string} displayName - Display name for the file
+   * @param {string} [mimeType] - MIME type (required for URLs, optional for Drive IDs)
+   * @returns {UploadedFile} Uploaded file info
+   * @example
+   * const uploaded = ai.uploadFile(blob, 'mydoc.pdf', 'application/pdf');
+   * const response = ai.promptWithFile('Summarize', { uri: uploaded.uri, mimeType: uploaded.mimeType });
+   */
+  uploadFile(file, displayName, mimeType) {}
+  
+  /**
+   * Upload a file from URL to Gemini API
+   * @param {string} url - URL to file
+   * @param {string} displayName - Display name for the file
+   * @param {string} [mimeType] - MIME type (required)
+   * @returns {UploadedFile} Uploaded file info
+   */
+  uploadFileFromUrl(url, displayName, mimeType) {}
+  
+  /**
+   * Delete an uploaded file
+   * @param {string} fileName - File name/ID to delete
+   * @returns {void}
+   */
+  deleteFile(fileName) {}
+  
+  /**
+   * Delete multiple uploaded files
+   * @param {Array<string>} fileNames - Array of file names/IDs
+   * @param {boolean} [continueOnError=true] - Continue deleting if one fails
+   * @returns {DeleteResult} Deletion results
+   */
+  deleteFiles(fileNames, continueOnError) {}
+  
+  /**
+   * Delete all uploaded files
+   * @param {number} [batchSize=10] - Number of files to delete per batch
+   * @returns {{deleted: number, failed: number}} Deletion statistics
+   */
+  deleteAllFiles(batchSize) {}
+  
+  /**
+   * List all uploaded files
+   * @param {number} [pageSize=100] - Number of files per page
+   * @returns {Array<FileInfo>} Array of file information
+   */
+  listFiles(pageSize) {}
+}
+
+/**
+ * Chat session method stubs (for autocomplete)
+ * @class
+ */
+class _ChatSessionStub {
+  /**
+   * Send a text message in the chat
+   * @param {string} text - The message text
+   * @param {ChatOptions} [options] - Optional configuration
+   * @returns {string|Object} Response text or parsed JSON object
+   * @example
+   * const response = chat.sendMessage('What is 5 + 5?');
+   */
+  sendMessage(text, options) {}
+  
+  /**
+   * Send a message with one or more images
+   * @param {string} text - The message text
+   * @param {Blob|string|Array<Blob|string>} images - Image(s) as Blob, URL, Drive ID, or array
+   * @param {ChatFileOptions} [options] - Optional configuration including mimeType
+   * @returns {string|Object} Response text or parsed JSON object
+   */
+  sendMessageWithImage(text, images, options) {}
+  
+  /**
+   * Send a message with one or more files
+   * @param {string} text - The message text
+   * @param {Blob|string|Object|Array<Blob|string|Object>} files - File(s) as Blob, URL, Drive ID, {uri, mimeType}, or array
+   * @param {ChatFileOptions} [options] - Optional configuration including mimeType
+   * @returns {string|Object} Response text or parsed JSON object
+   */
+  sendMessageWithFile(text, files, options) {}
+}
 
 /**
  * Create a new StvpsAi instance
@@ -47,7 +202,7 @@
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {StvpsAiInstance} StvpsAi instance
+ * @returns {_StvpsAiInstanceStub} StvpsAi instance
  */
 function newInstance(apiKey, model) {
   throw new Error('This is a stub file for autocomplete only. Use StvpsAi.newInstance() from the library.');

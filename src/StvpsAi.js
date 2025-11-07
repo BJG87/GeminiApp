@@ -745,9 +745,9 @@ class _StvpsAiChat {
   /**
    * Send a text message in the chat
    * 
-   * @param {string} text - The message text
-   * @param {Object} [options] - Options
-   * @param {Object} [options.schema] - JSON schema for structured response
+   * @param {string} text The message text
+   * @param {{schema: Object}} [options] Options for the request
+   * @param {Object} [options.schema] JSON schema for structured response
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -762,11 +762,11 @@ class _StvpsAiChat {
   /**
    * Send a message with an image
    * 
-   * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} image - Image file(s), URL(s), file ID(s), or file URI object(s)
-   * @param {Object} [options] - Options
-   * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs and file IDs, or array for multiple)
+   * @param {string} text The message text
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} image Image file(s), URL(s), file ID(s), or file URI object(s)
+   * @param {{schema: Object, mimeType: string|Array<string>}} [options] Options for the request
+   * @param {Object} [options.schema] JSON schema for structured response
+   * @param {string|Array<string>} [options.mimeType] MIME type (required for URLs and file IDs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -809,11 +809,11 @@ class _StvpsAiChat {
   /**
    * Send a message with a file (PDF, audio, video, etc.)
    * 
-   * @param {string} text - The message text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s), URL(s), file ID(s), or file URI object(s)
-   * @param {Object} [options] - Options
-   * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string|Array<string>} [options.mimeType] - MIME type (required for URLs and file IDs, or array for multiple)
+   * @param {string} text The message text
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file File(s), URL(s), file ID(s), or file URI object(s)
+   * @param {{schema: Object, mimeType: string|Array<string>}} [options] Options for the request
+   * @param {Object} [options.schema] JSON schema for structured response
+   * @param {string|Array<string>} [options.mimeType] MIME type (required for URLs and file IDs, or array for multiple)
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -935,10 +935,10 @@ class _StvpsAi {
   /**
    * Send a simple text prompt
    * 
-   * @param {string} text - The prompt text
-   * @param {Object} [options] - Options
-   * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string} [options.model] - Override default model
+   * @param {string} text The prompt text
+   * @param {{schema: Object, model: string}} [options] Options for the request
+   * @param {Object} [options.schema] JSON schema for structured response
+   * @param {string} [options.model] Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -1009,12 +1009,12 @@ class _StvpsAi {
   /**
    * Send a prompt with an image
    * 
-   * @param {string} text - The prompt text
-   * @param {Blob|string|Array<Blob|string>} image - Image(s) as Blob, URL string, file ID string, or array of any
-   * @param {Object} [options] - Options
-   * @param {string} [options.mimeType] - MIME type (required if image is a URL or file ID string, or array of mimeTypes if multiple images)
-   * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string} [options.model] - Override default model
+   * @param {string} text The prompt text
+   * @param {Blob|string|Array<Blob|string>} image Image(s) as Blob, URL string, file ID string, or array of any
+   * @param {{mimeType: string|Array<string>, schema: Object, model: string}} [options] Options for the request
+   * @param {string|Array<string>} [options.mimeType] MIME type (required if image is a URL or file ID string, or array of mimeTypes if multiple images)
+   * @param {Object} [options.schema] JSON schema for structured response
+   * @param {string} [options.model] Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -1083,12 +1083,12 @@ class _StvpsAi {
    * Send a prompt with a file (PDF, audio, video, etc.)
    * Supports Google Workspace files (Docs, Sheets, Slides) - automatically converted to PDF
    * 
-   * @param {string} text - The prompt text
-   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file - File(s) as Drive file, Blob, URL string, file ID string, file URI object, or array of any
-   * @param {Object} [options] - Options
-   * @param {string|Array<string>} options.mimeType - MIME type (required if file is a URL or file ID string, or array of mimeTypes if multiple files)
-   * @param {Object} [options.schema] - JSON schema for structured response
-   * @param {string} [options.model] - Override default model
+   * @param {string} text The prompt text
+   * @param {GoogleAppsScript.Drive.File|Blob|string|Object|Array} file File(s) as Drive file, Blob, URL string, file ID string, file URI object, or array of any
+   * @param {{mimeType: string|Array<string>, schema: Object, model: string}} options Options for the request
+   * @param {string|Array<string>} options.mimeType MIME type (required if file is a URL or file ID string, or array of mimeTypes if multiple files)
+   * @param {Object} [options.schema] JSON schema for structured response
+   * @param {string} [options.model] Override default model
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
@@ -1169,9 +1169,9 @@ class _StvpsAi {
   /**
    * Start a chat session
    * 
-   * @param {Object} [options] - Chat options
-   * @param {Array} [options.history] - Initial chat history
-   * @param {string} [options.systemInstruction] - System instruction
+   * @param {{history: Array, systemInstruction: string}} [options] Chat options
+   * @param {Array} [options.history] Initial chat history
+   * @param {string} [options.systemInstruction] System instruction
    * @returns {_StvpsAiChat} Chat session instance
    * 
    * @example
@@ -1190,9 +1190,9 @@ class _StvpsAi {
    * Upload a file from URL or Drive ID to Files API
    * Returns a file object with URI that can be reused
    * 
-   * @param {string} urlOrId - URL of the file or Google Drive file ID
-   * @param {string} [mimeType] - MIME type (required for URLs, not needed for Drive IDs)
-   * @param {string} [displayName] - Optional display name
+   * @param {string} urlOrId URL of the file or Google Drive file ID
+   * @param {string} [mimeType] MIME type (required for URLs, not needed for Drive IDs)
+   * @param {string} [displayName] Optional display name
    * @returns {Object} File object with uri, name, mimeType, etc.
    * 
    * @example
@@ -1226,8 +1226,8 @@ class _StvpsAi {
   /**
    * Upload a Drive file to Files API
    * 
-   * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
-   * @param {string} [displayName] - Optional display name
+   * @param {GoogleAppsScript.Drive.File|Blob} file Drive file or Blob
+   * @param {string} [displayName] Optional display name
    * @returns {Object} File object with uri
    * 
    * @example
@@ -1245,7 +1245,7 @@ class _StvpsAi {
   /**
    * Delete a file from the Files API
    * 
-   * @param {string} fileUri - File URI or name (e.g., 'files/abc123' or full URI)
+   * @param {string} fileUri File URI or name (e.g., 'files/abc123' or full URI)
    * @returns {Object} Result with success property
    * 
    * @example
