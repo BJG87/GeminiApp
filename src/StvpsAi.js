@@ -217,7 +217,7 @@ class _StvpsAiFileManager {
       // Check if this is just a file ID (no URL protocol)
       let fileId = null;
       let url = urlOrFileId;
-      
+
       if (!urlOrFileId.includes('://')) {
         // Looks like a bare file ID, treat as Google Drive file
         fileId = urlOrFileId;
@@ -225,12 +225,12 @@ class _StvpsAiFileManager {
         // Try to extract file ID from URL
         fileId = this._extractGoogleFileId(urlOrFileId);
       }
-      
+
       if (fileId) {
         // Handle Google Workspace files (both public and private)
         return this._uploadGoogleWorkspaceFile(url, fileId, mimeType, displayName);
       }
-      
+
       // For non-Google URLs, fetch directly
       const response = UrlFetchApp.fetch(urlOrFileId, { muteHttpExceptions: false });
       const fileData = response.getContent();
@@ -244,7 +244,7 @@ class _StvpsAiFileManager {
       );
     }
   }
-  
+
   /**
    * Handle uploading Google Workspace files (Docs, Sheets, Slides, Drive)
    * Supports both public and private files
@@ -255,13 +255,13 @@ class _StvpsAiFileManager {
       let blob;
       let finalMimeType = mimeType;
       let finalDisplayName = displayName;
-      
+
       // If url is null/empty, we're working with just a file ID - treat as Drive file
       if (!url || !url.includes('://')) {
         const file = DriveApp.getFileById(fileId);
         blob = file.getBlob();
         const driveFileMimeType = file.getMimeType();
-        
+
         // Check if it's a Google Workspace file type and export as PDF
         if (driveFileMimeType === 'application/vnd.google-apps.document') {
           const doc = DocumentApp.openById(fileId);
@@ -318,10 +318,10 @@ class _StvpsAiFileManager {
         blob = response.getBlob();
         finalDisplayName = finalDisplayName || this._getFileNameFromUrl(url);
       }
-      
+
       const bytes = blob.getBytes();
       return this._uploadBytesSimple(bytes, finalMimeType, finalDisplayName);
-      
+
     } catch (error) {
       // If we don't have access, throw a helpful error
       if (error.message && error.message.includes('No item with the given ID')) {
@@ -338,7 +338,7 @@ class _StvpsAiFileManager {
       throw error;
     }
   }
-  
+
   /**
    * Extract Google file ID from various URL formats
    * @private
@@ -390,14 +390,14 @@ class _StvpsAiFileManager {
   _uploadBytesSimple(bytes, mimeType, displayName) {
     // Use resumable upload - this is the standard way for the Gemini Files API
     const boundary = '----StvpsAiBoundary' + Utilities.getUuid();
-    
+
     // Step 1: Create resumable session with metadata
     const metadata = {
       file: {
         displayName: displayName
       }
     };
-    
+
     // Build initial request with metadata
     const initialUrl = this.uploadBaseUrl + '?key=' + this.apiKey;
     const initialOptions = {
@@ -412,9 +412,9 @@ class _StvpsAiFileManager {
         'X-Goog-Upload-Header-Content-Length': bytes.length
       }
     };
-    
+
     const initialResponse = this._makeRequestWithRetry(initialUrl, initialOptions);
-    
+
     if (initialResponse.getResponseCode() !== 200) {
       const responseText = initialResponse.getContentText();
       let errorMsg = 'Unknown error';
@@ -430,11 +430,11 @@ class _StvpsAiFileManager {
         responseText
       );
     }
-    
+
     // Get upload URL from response header
     const headers = initialResponse.getHeaders();
     const uploadUrl = headers['X-Goog-Upload-URL'] || headers['x-goog-upload-url'];
-    
+
     if (!uploadUrl) {
       throw new StvpsAiApiError(
         'No upload URL returned in response',
@@ -442,7 +442,7 @@ class _StvpsAiFileManager {
         initialResponse.getContentText()
       );
     }
-    
+
     // Step 2: Upload file content
     const uploadOptions = {
       method: 'post',
@@ -454,9 +454,9 @@ class _StvpsAiFileManager {
         'X-Goog-Upload-Offset': '0'
       }
     };
-    
+
     const uploadResponse = UrlFetchApp.fetch(uploadUrl, uploadOptions);
-    
+
     if (uploadResponse.getResponseCode() !== 200) {
       const responseText = uploadResponse.getContentText();
       let errorMsg = 'Unknown error';
@@ -472,7 +472,7 @@ class _StvpsAiFileManager {
         responseText
       );
     }
-    
+
     const uploadedFile = JSON.parse(uploadResponse.getContentText()).file;
     return uploadedFile;
   }
@@ -509,7 +509,7 @@ class _StvpsAiFileManager {
       method: 'delete',
       muteHttpExceptions: true
     };
-    
+
     try {
       const response = UrlFetchApp.fetch(url, options);
       const statusCode = response.getResponseCode();
@@ -533,7 +533,7 @@ class _StvpsAiFileManager {
       } catch (e) {
         errorMsg = responseText;
       }
-      
+
       throw new StvpsAiApiError(
         `Failed to delete file: ${errorMsg}`,
         statusCode,
@@ -568,15 +568,15 @@ class _StvpsAiFileManager {
     const total = fileNames.length;
     for (let i = 0; i < total; i++) {
       const fileName = fileNames[i];
-      
+
       if (showProgress && (i % 5 === 0 || i === total - 1)) {
         console.log(`Deleting files: ${i + 1}/${total}`);
       }
-      
+
       try {
         const result = this.deleteFile(fileName);
         results.success.push(fileName);
-        
+
         // Delay to avoid rate limiting
         if (i < total - 1) {
           Utilities.sleep(1000); // 1 second between deletes to avoid rate limits
@@ -597,18 +597,18 @@ class _StvpsAiFileManager {
   deleteAllFiles(maxFiles = 100) {
     const filesList = this.listFiles(maxFiles);
     const fileNames = (filesList.files || []).map(f => f.name);
-    
+
     if (fileNames.length === 0) {
       return { deleted: 0, failed: [] };
     }
 
     console.log(`Found ${fileNames.length} files to delete...`);
-    
+
     // Filter out files that are still processing
     const files = filesList.files || [];
     const activeFiles = [];
     const processingFiles = [];
-    
+
     for (const file of files) {
       if (file.state === 'PROCESSING') {
         processingFiles.push(file.name);
@@ -616,25 +616,25 @@ class _StvpsAiFileManager {
         activeFiles.push(file.name);
       }
     }
-    
+
     if (processingFiles.length > 0) {
       console.log(`Skipping ${processingFiles.length} files that are still processing`);
     }
-    
+
     if (activeFiles.length === 0) {
-      return { 
-        deleted: 0, 
+      return {
+        deleted: 0,
         failed: processingFiles.map(name => ({ fileName: name, error: 'File is still processing' }))
       };
     }
-    
+
     const results = this.deleteFiles(activeFiles, true); // Show progress
-    
+
     // Add processing files to failed list
     processingFiles.forEach(name => {
       results.failed.push({ fileName: name, error: 'File is still processing' });
     });
-    
+
     return {
       deleted: results.success.length,
       failed: results.failed
@@ -788,7 +788,7 @@ class _StvpsAiChat {
    */
   sendMessageWithImage(text, image, options = {}) {
     const parts = [{ text: text }];
-    
+
     // Handle array of images
     if (Array.isArray(image)) {
       const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
@@ -802,7 +802,7 @@ class _StvpsAiChat {
       const imagePart = this.ai._prepareFilePart(image, 'image', options.mimeType);
       parts.push(imagePart);
     }
-    
+
     return this._sendMessage(parts, options);
   }
 
@@ -840,7 +840,7 @@ class _StvpsAiChat {
    */
   sendMessageWithFile(text, file, options = {}) {
     const parts = [{ text: text }];
-    
+
     // Handle array of files
     if (Array.isArray(file)) {
       const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
@@ -854,7 +854,7 @@ class _StvpsAiChat {
       const filePart = this.ai._prepareFilePart(file, 'file', options.mimeType);
       parts.push(filePart);
     }
-    
+
     return this._sendMessage(parts, options);
   }
 
@@ -1046,7 +1046,7 @@ class _StvpsAi {
    */
   promptWithImage(text, image, options = {}) {
     const parts = [{ text: text }];
-    
+
     // Handle array of images
     if (Array.isArray(image)) {
       const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
@@ -1133,7 +1133,7 @@ class _StvpsAi {
    */
   promptWithFile(text, file, options = {}) {
     const parts = [{ text: text }];
-    
+
     // Handle array of files
     if (Array.isArray(file)) {
       const mimeTypes = Array.isArray(options.mimeType) ? options.mimeType : [];
@@ -1216,7 +1216,7 @@ class _StvpsAi {
         throw new StvpsAiValidationError(`Failed to access Drive file with ID '${urlOrId}': ${e.message}`);
       }
     }
-    
+
     // It's a URL
     return this.fileManager.uploadFromUrl(urlOrId, mimeType, displayName);
   }
@@ -1289,13 +1289,13 @@ class _StvpsAi {
     if (typeof file === 'string') {
       // Check if it's a plain file ID (no slashes, just alphanumeric and dashes)
       const isPlainFileId = /^[a-zA-Z0-9_-]+$/.test(file) && !file.includes('/') && !file.includes('.');
-      
+
       // Check if it's a Google Workspace URL (docs, sheets, slides, drive)
-      const isWorkspaceUrl = file.includes('docs.google.com/') || 
-                            file.includes('sheets.google.com/') || 
-                            file.includes('slides.google.com/') ||
-                            file.includes('drive.google.com/');
-      
+      const isWorkspaceUrl = file.includes('docs.google.com/') ||
+        file.includes('sheets.google.com/') ||
+        file.includes('slides.google.com/') ||
+        file.includes('drive.google.com/');
+
       if (isPlainFileId || isWorkspaceUrl) {
         // It's a Google Workspace file ID or URL - use DriveApp directly
         // No mimeType needed - detected automatically during upload
@@ -1311,7 +1311,7 @@ class _StvpsAi {
             }
             driveFile = DriveApp.getFileById(fileIdMatch[0]);
           }
-          
+
           const uploadedFile = this.fileManager.uploadDriveFile(driveFile);
           return {
             fileData: {
@@ -1339,7 +1339,7 @@ class _StvpsAi {
           'Example: ai.promptWithFile(text, url, { mimeType: "audio/mpeg" })'
         );
       }
-      
+
       // Upload URL to Files API (handles both public URLs and private Google Workspace files)
       const uploadedFile = this.fileManager.uploadFromUrl(file, mimeType);
       return {
@@ -1473,8 +1473,8 @@ class _StvpsAi {
     const candidate = response.candidates[0];
 
     // Only check finishReason if it's a problematic one (not STOP)
-    if (candidate.finishReason && 
-        !['STOP', 'MAX_TOKENS', 'FINISH_REASON_UNSPECIFIED'].includes(candidate.finishReason)) {
+    if (candidate.finishReason &&
+      !['STOP', 'MAX_TOKENS', 'FINISH_REASON_UNSPECIFIED'].includes(candidate.finishReason)) {
       throw new StvpsAiApiError(
         `Response generation stopped: ${candidate.finishReason}. ` +
         `${candidate.finishMessage || ''}`,
@@ -1518,10 +1518,10 @@ class _StvpsAi {
   _isDriveFileId(str) {
     // Drive IDs are typically 25-50 alphanumeric characters with hyphens/underscores
     // and don't contain slashes, colons, or dots (which URLs have)
-    return /^[A-Za-z0-9_-]{20,}$/.test(str) && 
-           !str.includes('/') && 
-           !str.includes(':') && 
-           !str.includes('.');
+    return /^[A-Za-z0-9_-]{20,}$/.test(str) &&
+      !str.includes('/') &&
+      !str.includes(':') &&
+      !str.includes('.');
   }
 
   /**
@@ -1531,11 +1531,11 @@ class _StvpsAi {
    * @returns {boolean} True if it's a Google Workspace URL
    */
   _isGoogleWorkspaceUrl(url) {
-    return url.includes('docs.google.com/') || 
-           url.includes('drive.google.com/') ||
-           url.includes('sheets.google.com/') ||
-           url.includes('slides.google.com/') ||
-           url.includes('forms.google.com/');
+    return url.includes('docs.google.com/') ||
+      url.includes('drive.google.com/') ||
+      url.includes('sheets.google.com/') ||
+      url.includes('slides.google.com/') ||
+      url.includes('forms.google.com/');
   }
 }
 
@@ -1548,7 +1548,7 @@ class _StvpsAi {
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {_StvpsAi} StvpsAi instance with prompt methods
+ * @returns {StvpsAiInstance} StvpsAi instance with prompt methods
  * 
  * @example
  * const ai = StvpsAi.newInstance('YOUR_API_KEY');
@@ -1559,6 +1559,29 @@ class _StvpsAi {
 function newInstance(apiKey, model) {
   return new _StvpsAi(apiKey, model);
 }
+
+/**
+ * @typedef {Object} ChatSession
+ * @property {function(string, {schema: Object=}=): (string|Object)} sendMessage - Send a text message in chat. Returns text or JSON if schema provided.
+ * @property {function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object)} sendMessageWithImage - Send message with image(s). Returns text or JSON if schema provided.
+ * @property {function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object)} sendMessageWithFile - Send message with file(s). Returns text or JSON if schema provided.
+ * @property {Array<Object>} history - Chat history array
+ */
+
+/**
+ * @typedef {Object} StvpsAiInstance
+ * @property {function(string, {schema: Object=, model: string=}=): (string|Object)} prompt - Send a simple text prompt. Returns text or JSON object if schema provided.
+ * @property {function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithImage - Send a prompt with one or more images. Returns text or JSON object if schema provided.
+ * @property {function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithFile - Send a prompt with one or more files (PDF, audio, video). Returns text or JSON object if schema provided.
+ * @property {function(): ChatSession} startChat - Start a new chat session. Returns ChatSession with sendMessage(), sendMessageWithImage(), sendMessageWithFile() methods.
+ * @property {function(Blob, string, string=): Object} uploadFile - Upload a file (Blob) to Files API. Returns {uri, mimeType, name} for reuse in prompts.
+ * @property {function(string, string, string=): Object} uploadFileFromUrl - Upload file from URL or Drive file ID. Returns {uri, mimeType, name}.
+ * @property {function(string): Object} deleteFile - Delete an uploaded file by name. Returns deletion status.
+ * @property {function(Array<string>, boolean=): Object} deleteFiles - Delete multiple files. Returns {success: Array, failed: Array}.
+ * @property {function(number=): Object} deleteAllFiles - Delete all uploaded files (max 100). Returns {deleted: number, failed: Array}.
+ * @property {function(number=): Object} listFiles - List uploaded files. Returns {files: Array, nextPageToken: string}.
+ * @property {Object} fileManager - File manager instance for advanced file operations
+ */
 
 /**
  * StvpsAi - Simplified Gemini API library
@@ -1583,20 +1606,20 @@ var StvpsAi = {
     processJobs: processJobs,
     addJob: addJob,
     addJobs: addJobs,
-    
+
     // Configuration
     setMaxConcurrentJobs: setMaxConcurrentJobs,
     getMaxConcurrentJobs: getMaxConcurrentJobs,
-    
+
     // Trigger control
     startProcessingJobs: startProcessingJobs,
     stopProcessingJobs: stopProcessingJobs,
-    
+
     // Queue status and utilities
     getQueueStatus: getQueueStatus,
     clearJobQueue: clearJobQueue,
     clearRunningJobs: clearRunningJobs,
-    
+
     // Failed jobs management
     listFailedJobs: listFailedJobs,
     clearFailedJobs: clearFailedJobs,
