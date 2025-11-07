@@ -913,6 +913,8 @@ class _StvpsAiChat {
 
 /**
  * Main StvpsAi class for interacting with Google's Gemini API
+ * @class
+ * @implements {StvpsAiInstance}
  */
 class _StvpsAi {
   /**
@@ -1548,7 +1550,24 @@ class _StvpsAi {
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {StvpsAiInstance} StvpsAi instance with prompt methods
+ * @returns {{
+ *   prompt: function(string, {schema: Object=, model: string=}=): (string|Object),
+ *   promptWithImage: function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object),
+ *   promptWithFile: function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object),
+ *   startChat: function(): {
+ *     sendMessage: function(string, {schema: Object=}=): (string|Object),
+ *     sendMessageWithImage: function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object),
+ *     sendMessageWithFile: function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=}=): (string|Object),
+ *     history: Array<Object>
+ *   },
+ *   uploadFile: function(Blob, string, string=): Object,
+ *   uploadFileFromUrl: function(string, string, string=): Object,
+ *   deleteFile: function(string): Object,
+ *   deleteFiles: function(Array<string>, boolean=): Object,
+ *   deleteAllFiles: function(number=): Object,
+ *   listFiles: function(number=): Object,
+ *   fileManager: Object
+ * }} StvpsAi instance with prompt methods
  * 
  * @example
  * const ai = StvpsAi.newInstance('YOUR_API_KEY');
