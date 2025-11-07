@@ -73,7 +73,7 @@ Add these lines at the top of your `.js` or `.gs` files:
 
 // Now you get full autocomplete!
 const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-const ai = newStvpsAiInstance(apiKey);
+const ai = StvpsAi.newInstance(apiKey);
 
 // IntelliSense will show all available methods
 const response = ai.prompt("Hello!"); // ✓ Autocomplete works!
@@ -88,7 +88,7 @@ const response = ai.prompt("Hello!"); // ✓ Autocomplete works!
 /// <reference path="../types/stvpsai.d.ts" />
 
 function example1() {
-  const ai = newStvpsAiInstance('your-api-key');
+  const ai = StvpsAi.newInstance('your-api-key');
   
   // Type 'ai.' and IntelliSense will show all methods:
   // - prompt()
@@ -112,9 +112,9 @@ function example1() {
 /// <reference path="../types/stvpsai.d.ts" />
 
 function example2() {
-  const ai = newStvpsAiInstance('your-api-key');
+  const ai = StvpsAi.newInstance('your-api-key');
   
-  /** @type {StvpsAi.Schema} */
+  /** @type {StvpsAiSchema} */
   const schema = {
     type: 'object',
     properties: {
@@ -138,7 +138,7 @@ function example2() {
 /// <reference path="../types/stvpsai.d.ts" />
 
 function example3() {
-  const ai = newStvpsAiInstance('your-api-key');
+  const ai = StvpsAi.newInstance('your-api-key');
   
   const imageUrl = "https://example.com/image.jpg";
   
@@ -160,7 +160,7 @@ function example3() {
 /// <reference path="../types/stvpsai.d.ts" />
 
 function example4() {
-  const ai = newStvpsAiInstance('your-api-key');
+  const ai = StvpsAi.newInstance('your-api-key');
   
   // IntelliSense shows ChatSession type and its methods
   const chat = ai.startChat();
@@ -189,7 +189,7 @@ function example4() {
 /// <reference path="../types/stvpsai.d.ts" />
 
 function example5() {
-  const ai = newStvpsAiInstance('your-api-key');
+  const ai = StvpsAi.newInstance('your-api-key');
   
   const driveFileId = "1abc...xyz";
   
