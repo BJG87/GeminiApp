@@ -1,18 +1,3 @@
-/**
- * StvpsAi - TypeScript Type Definitions
- * A simple, streamlined Google Apps Script library for Gemini API
- * 
- * Usage:
- * 1. For TypeScript projects with clasp:
- *    - Place this file in your project's types/ folder
- *    - Add to tsconfig.json: "include": ["src/**/*", "types/**/*.d.ts"]
- *    - Import in your .ts files: import type { StvpsAiInstance } from '../types/stvpsai';
- * 
- * 2. For JavaScript projects with JSDoc:
- *    - Place this file in your project's types/ folder  
- *    - Add to top of .js file: /// <reference path="./types/stvpsai.d.ts" />
- *    - Add @ts-check for type checking
- */
 
 // ========================================
 // Core Types

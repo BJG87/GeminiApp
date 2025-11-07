@@ -1548,15 +1548,7 @@ class _StvpsAi {
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {{
- *   prompt: function(string, Object=): (string|Object),
- *   promptWithImage: function(string, (Blob|string), Object=): (string|Object),
- *   promptWithFile: function(string, (Object|Blob|string), Object=): (string|Object),
- *   startChat: function(Object=): Object,
- *   uploadFile: function(string, string, string=): Object,
- *   uploadDriveFile: function((GoogleAppsScript.Drive.File|Blob), string=): Object,
- *   getFileManager: function(): Object
- * }} StvpsAi instance with prompt methods
+ * @returns {_StvpsAi} StvpsAi instance with prompt methods
  * 
  * @example
  * const ai = StvpsAi.newInstance('YOUR_API_KEY');
