@@ -1,14 +1,14 @@
 /**
- * StvpsAi Autocomplete Helper
+ * GeminiApp Autocomplete Helper
  * 
  * Include this file in your Apps Script project to get IntelliSense/autocomplete
- * for the StvpsAi library. This file contains only JSDoc type definitions and
+ * for the GeminiApp library. This file contains only JSDoc type definitions and
  * doesn't execute any code.
  * 
  * USAGE:
  * 1. Copy this file to your Apps Script project
  * 2. Don't call any functions from this file
- * 3. Your editor will now provide autocomplete for StvpsAi methods
+ * 3. Your editor will now provide autocomplete for GeminiApp methods
  */
 
 /**
@@ -37,7 +37,7 @@
  */
 
 /**
- * @typedef {Object} StvpsAiInstance
+ * @typedef {Object} GeminiAppInstance
  * @property {function(string, PromptOptions=): (string|Object)} prompt - Send a simple text prompt
  * @property {function(string, (Blob|string|Array<Blob|string>), PromptOptions=): (string|Object)} promptWithImage - Send a prompt with image(s)
  * @property {function(string, (FileInput|Blob|string|Array<FileInput|Blob|string>), PromptOptions=): (string|Object)} promptWithFile - Send a prompt with file(s)
@@ -68,7 +68,7 @@
  */
 
 /**
- * Main StvpsAi namespace - DO NOT CALL ANYTHING FROM THIS FILE
+ * Main GeminiApp namespace - DO NOT CALL ANYTHING FROM THIS FILE
  * This file only provides IntelliSense/autocomplete support
- * @namespace StvpsAiAutocomplete
+ * @namespace GeminiAppAutocomplete
  */

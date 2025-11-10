@@ -1,8 +1,8 @@
 
 /**
- * StvpsAi Test Suite
+ * GeminiApp Test Suite
  * 
- * Tests all functionality of the StvpsAi library
+ * Tests all functionality of the GeminiApp library
  * 
  * Setup:
  * 1. Set Script Property 'GEMINI_API_KEY' with your API key
@@ -36,7 +36,7 @@ function cleanupAllTestFiles() {
   console.log('=== Cleanup: Deleting All Uploaded Files ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
 
     const result = fileManager.deleteAllFiles(100);
@@ -61,7 +61,7 @@ function listUploadedFiles() {
   console.log('=== Listing Uploaded Files ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
 
     const filesList = fileManager.listFiles(100);
@@ -101,7 +101,7 @@ function test1_simpleTextPrompt() {
   console.log('=== Test 1: Simple Text Prompt ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const response = ai.prompt('Write a haiku about programming');
 
     console.log('Success!');
@@ -128,7 +128,7 @@ function test2_structuredJsonPrompt() {
   console.log('=== Test 2: Structured JSON Prompt ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     const schema = {
       type: 'object',
@@ -193,7 +193,7 @@ function test3_promptWithDriveImage() {
       return true;
     }
 
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const imageFile = DriveApp.getFileById(imageFileId);
 
     const response = ai.promptWithImage('Describe this image in one sentence', imageFile);
@@ -217,7 +217,7 @@ function test4_promptWithImageUrl() {
   console.log('=== Test 4: Prompt with Image URL ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     // Public image URL
     const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
@@ -247,7 +247,7 @@ function test5_promptWithImageStructured() {
   console.log('=== Test 5: Prompt with Image + Structured Output ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
 
@@ -316,7 +316,7 @@ function test6_promptWithAudioUrl() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
 
     // Upload from Drive (fast and reliable)
     const driveFile = DriveApp.getFileById(audioFileId);
@@ -367,7 +367,7 @@ function test7_promptWithAudioStructured() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
 
     const driveFile = DriveApp.getFileById(audioFileId);
     uploadedFile = ai.uploadDriveFile(driveFile, 'Test Audio');
@@ -428,7 +428,7 @@ function test8_promptWithDriveAudioUrl() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
 
     // Upload once
     const driveFile = DriveApp.getFileById(audioFileId);
@@ -478,7 +478,7 @@ function test9_basicChat() {
   console.log('=== Test 9: Basic Chat Session ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat();
 
     const response1 = chat.sendMessage('What is the capital of France?');
@@ -510,7 +510,7 @@ function test10_chatWithSystemInstruction() {
   console.log('=== Test 10: Chat with System Instruction ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat({
       systemInstruction: 'You are a pirate. Always respond in pirate speak.'
     });
@@ -544,7 +544,7 @@ function test11_chatWithImage() {
   console.log('=== Test 11: Chat with Image ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat();
 
     const imageUrl = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
@@ -586,7 +586,7 @@ function test12_chatWithFile() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat();
 
     // Upload audio file
@@ -630,7 +630,7 @@ function test13_chatWithStructuredOutput() {
   console.log('=== Test 13: Chat with Structured Output ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat();
 
     const schema = {
@@ -674,7 +674,7 @@ function test14_uploadAndReuseFile() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
 
     // Upload file once - using small image for automated testing
     console.log('Uploading file...');
@@ -747,7 +747,7 @@ function manualTest_uploadLargeAudioFile() {
   /* EXAMPLE CODE - Modify with your Drive file ID:
   
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     // Upload large audio file from Drive (FAST - no external fetch)
     console.log('Uploading audio file from Drive...');
@@ -799,7 +799,7 @@ function test15_listFiles() {
   let ai = null;
 
   try {
-    ai = StvpsAi.newInstance(getApiKey());
+    ai = GeminiApp.newInstance(getApiKey());
     const fileManager = ai.getFileManager();
 
     // Upload a test file
@@ -847,13 +847,13 @@ function test16_invalidApiKey() {
   console.log('=== Test 16: Invalid API Key ===');
 
   try {
-    const ai = StvpsAi.newInstance('invalid_key_12345');
+    const ai = GeminiApp.newInstance('invalid_key_12345');
 
     try {
       ai.prompt('Test');
       throw new Error('Should have thrown error for invalid key');
     } catch (error) {
-      if (error.name === 'StvpsAiApiError') {
+      if (error.name === 'GeminiAppApiError') {
         console.log('Correctly caught API error:', error.message);
         console.log('✓ Test 16 PASSED\n');
         return true;
@@ -874,14 +874,14 @@ function test17_missingMimeType() {
   console.log('=== Test 17: Missing MIME Type ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     try {
       // This should fail - URL without mimeType
       ai.promptWithFile('Test', 'https://example.com/file.mp3');
       throw new Error('Should have thrown validation error');
     } catch (error) {
-      if (error.name === 'StvpsAiValidationError') {
+      if (error.name === 'GeminiAppValidationError') {
         console.log('Correctly caught validation error:', error.message);
         console.log('✓ Test 17 PASSED\n');
         return true;
@@ -906,7 +906,7 @@ function test18_multipleImages() {
   console.log('=== Test 18: Multiple Images ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     // Two image URLs
     const imageUrl1 = 'https://storage.googleapis.com/generativeai-downloads/images/scones.jpg';
@@ -936,7 +936,7 @@ function test19_multipleFilesInChat() {
   console.log('=== Test 19: Multiple Files in Chat ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
     const chat = ai.startChat();
 
     // Two image URLs for comparison
@@ -972,7 +972,7 @@ function test20_WorkspaceFiles() {
   console.log('=== Test 20: Google Workspace Files ===');
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     // ========================================================================
     // OPTION 1: Test with a PUBLIC Google Doc
@@ -1063,7 +1063,7 @@ function test21_driveFileId() {
   }
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     console.log(`Using file ID: ${audioFileId}`);
     console.log('Sending prompt with file ID (no URL needed)...');
@@ -1109,7 +1109,7 @@ function test22_uploadFileWithDriveId() {
   const docFileId = '1DrnwWmoNPfo4TKgacPwn1qEbY5nlzFec'; // Public test doc
 
   try {
-    const ai = StvpsAi.newInstance(getApiKey());
+    const ai = GeminiApp.newInstance(getApiKey());
 
     console.log(`Uploading file with Drive ID: ${docFileId}`);
     console.log('Note: No mimeType needed when using Drive ID\n');
@@ -1171,7 +1171,7 @@ function test22_uploadFileWithDriveId() {
  */
 function runAllTests() {
   console.log('╔════════════════════════════════════════════╗');
-  console.log('║     StvpsAi Test Suite                    ║');
+  console.log('║     GeminiApp Test Suite                    ║');
   console.log('╚════════════════════════════════════════════╝\n');
 
   const tests = [
@@ -1246,7 +1246,7 @@ function runAllTests() {
 function runQuickTest() {
   console.log('=== Quick Test ===');
 
-  const ai = StvpsAi.newInstance(getApiKey());
+  const ai = GeminiApp.newInstance(getApiKey());
 
   console.log('1. Testing simple prompt...');
   const text = ai.prompt('Say hello in 3 different languages');

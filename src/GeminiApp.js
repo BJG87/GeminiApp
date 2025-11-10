@@ -1,6 +1,6 @@
 
 /**
- * StvpsAi - A simplified Gemini API library for Google Apps Script
+ * GeminiApp - A simplified Gemini API library for Google Apps Script
  * 
  * Features:
  * - Simple text and structured JSON prompts
@@ -14,11 +14,11 @@
 
  * 
  * @example Basic usage
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const response = ai.prompt('Hello, how are you?');
  * 
  * @example Structured output
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const schema = {
  *   type: 'object',
  *   properties: {
@@ -29,15 +29,15 @@
  * const data = ai.prompt('Extract person info', { schema });
  * 
  * @example With single image
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const response = ai.promptWithImage('What is in this image?', imageBlob);
  * 
  * @example With multiple images
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const response = ai.promptWithImage('Compare these images', [image1, image2, image3]);
  * 
  * @example With private Google Doc (user must have access)
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const response = ai.promptWithFile(
  *   'Summarize this document',
  *   'https://docs.google.com/document/d/YOUR_DOC_ID/edit',
@@ -45,7 +45,7 @@
  * );
  * 
  * @example Chat mode
- * const ai = StvpsAi.newInstance(apiKey);
+ * const ai = GeminiApp.newInstance(apiKey);
  * const chat = ai.startChat();
  * chat.sendMessage('Hello');
  * chat.sendMessage('Tell me more');
@@ -92,22 +92,22 @@
 // ============================================================================
 
 /**
- * Base error class for StvpsAi
+ * Base error class for GeminiApp
  */
-class StvpsAiError extends Error {
+class GeminiAppError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'StvpsAiError';
+    this.name = 'GeminiAppError';
   }
 }
 
 /**
  * Error for API request failures
  */
-class StvpsAiApiError extends StvpsAiError {
+class GeminiAppApiError extends GeminiAppError {
   constructor(message, statusCode, response) {
     super(message);
-    this.name = 'StvpsAiApiError';
+    this.name = 'GeminiAppApiError';
     this.statusCode = statusCode;
     this.response = response;
   }
@@ -116,10 +116,10 @@ class StvpsAiApiError extends StvpsAiError {
 /**
  * Error for invalid input parameters
  */
-class StvpsAiValidationError extends StvpsAiError {
+class GeminiAppValidationError extends GeminiAppError {
   constructor(message) {
     super(message);
-    this.name = 'StvpsAiValidationError';
+    this.name = 'GeminiAppValidationError';
   }
 }
 
@@ -131,7 +131,7 @@ class StvpsAiValidationError extends StvpsAiError {
  * Manages file uploads to the Gemini Files API
  * Files uploaded here can be referenced by URI instead of sending inline data
  */
-class _StvpsAiFileManager {
+class _GeminiAppFileManager {
   /**
    * @param {string} apiKey - Google AI API key
    */
@@ -157,11 +157,11 @@ class _StvpsAiFileManager {
    * @param {string} mimeType - MIME type (e.g., 'audio/mpeg', 'video/mp4', 'application/pdf')
    * @param {string} [displayName] - Optional display name for the file
    * @returns {Object} File object with properties: name, uri, mimeType, sizeBytes, createTime, etc.
-   * @throws {StvpsAiApiError} If upload fails
+   * @throws {GeminiAppApiError} If upload fails
    * 
    * @example
    * // For small files (images, short audio)
-   * const fileManager = new StvpsAiFileManager('YOUR_API_KEY');
+   * const fileManager = new GeminiAppFileManager('YOUR_API_KEY');
    * const file = fileManager.uploadFromUrl(
    *   'https://example.com/image.jpg',
    *   'image/jpeg'
@@ -211,7 +211,7 @@ class _StvpsAiFileManager {
 
       return this._uploadBytesSimple(fileData, mimeType, displayName || this._getFileNameFromUrl(urlOrFileId));
     } catch (error) {
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Failed to fetch file from URL: ${error.message}`,
         0,
         null
@@ -299,7 +299,7 @@ class _StvpsAiFileManager {
     } catch (error) {
       // If we don't have access, throw a helpful error
       if (error.message && error.message.includes('No item with the given ID')) {
-        throw new StvpsAiApiError(
+        throw new GeminiAppApiError(
           `Cannot access Google Workspace file. Please ensure:\n` +
           `1. You have permission to access the file\n` +
           `2. The file ID is correct\n` +
@@ -342,7 +342,7 @@ class _StvpsAiFileManager {
    * @param {GoogleAppsScript.Drive.File|Blob} file - Drive file or Blob
    * @param {string} [displayName] - Optional display name
    * @returns {Object} File object with uri property
-   * @throws {StvpsAiApiError} If upload fails
+   * @throws {GeminiAppApiError} If upload fails
    * 
    * @example
    * const file = DriveApp.getFileById('FILE_ID');
@@ -363,7 +363,7 @@ class _StvpsAiFileManager {
    */
   _uploadBytesSimple(bytes, mimeType, displayName) {
     // Use resumable upload - this is the standard way for the Gemini Files API
-    const boundary = '----StvpsAiBoundary' + Utilities.getUuid();
+    const boundary = '----GeminiAppBoundary' + Utilities.getUuid();
 
     // Step 1: Create resumable session with metadata
     const metadata = {
@@ -398,7 +398,7 @@ class _StvpsAiFileManager {
       } catch (e) {
         errorMsg = responseText.substring(0, 200);
       }
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Failed to start resumable upload: ${errorMsg}`,
         initialResponse.getResponseCode(),
         responseText
@@ -410,7 +410,7 @@ class _StvpsAiFileManager {
     const uploadUrl = headers['X-Goog-Upload-URL'] || headers['x-goog-upload-url'];
 
     if (!uploadUrl) {
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         'No upload URL returned in response',
         500,
         initialResponse.getContentText()
@@ -440,7 +440,7 @@ class _StvpsAiFileManager {
       } catch (e) {
         errorMsg = responseText.substring(0, 200);
       }
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `File upload failed: ${errorMsg}`,
         uploadResponse.getResponseCode(),
         responseText
@@ -462,7 +462,7 @@ class _StvpsAiFileManager {
 
     if (response.getResponseCode() !== 200) {
       const data = JSON.parse(response.getContentText());
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Failed to get file: ${data.error?.message || 'Unknown error'}`,
         response.getResponseCode(),
         data
@@ -508,18 +508,18 @@ class _StvpsAiFileManager {
         errorMsg = responseText;
       }
 
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Failed to delete file: ${errorMsg}`,
         statusCode,
         responseText
       );
     } catch (error) {
       // If it's already our error, re-throw
-      if (error instanceof StvpsAiApiError) {
+      if (error instanceof GeminiAppApiError) {
         throw error;
       }
       // Network timeout or other error
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Delete request failed: ${error.message}`,
         0,
         error.toString()
@@ -626,7 +626,7 @@ class _StvpsAiFileManager {
 
     if (response.getResponseCode() !== 200) {
       const data = JSON.parse(response.getContentText());
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Failed to list files: ${data.error?.message || 'Unknown error'}`,
         response.getResponseCode(),
         data
@@ -688,7 +688,7 @@ class _StvpsAiFileManager {
       }
     }
 
-    throw new StvpsAiApiError(
+    throw new GeminiAppApiError(
       `Request failed after ${maxRetries} retries: ${lastError?.message || 'Unknown error'}`,
       0,
       null
@@ -703,9 +703,9 @@ class _StvpsAiFileManager {
 /**
  * Represents a chat session with context
  */
-class _StvpsAiChat {
+class _GeminiAppChat {
   /**
-   * @param {_StvpsAi} ai - Parent AI instance
+   * @param {_GeminiApp} ai - Parent AI instance
    * @param {Object} [options] - Chat options
    * @param {Array} [options.history] - Initial chat history
    * @param {string} [options.systemInstruction] - System instruction for the chat
@@ -886,24 +886,24 @@ class _StvpsAiChat {
 // ============================================================================
 
 /**
- * Main StvpsAi class for interacting with Google's Gemini API
+ * Main GeminiApp class for interacting with Google's Gemini API
  * @class
- * @implements {StvpsAiInstance}
+ * @implements {GeminiAppInstance}
  */
-class _StvpsAi {
+class _GeminiApp {
   /**
    * @param {string} apiKey - Google AI API key
    * @param {string} [model='gemini-2.5-flash'] - Model to use
    */
   constructor(apiKey, model = 'gemini-2.5-flash') {
     if (!apiKey) {
-      throw new StvpsAiValidationError('API key is required');
+      throw new GeminiAppValidationError('API key is required');
     }
 
     this.apiKey = apiKey;
     this.model = model;
     this.baseUrl = 'https://generativelanguage.googleapis.com/v1beta';
-    this.fileManager = new _StvpsAiFileManager(apiKey);
+    this.fileManager = new _GeminiAppFileManager(apiKey);
   }
 
   /**
@@ -916,7 +916,7 @@ class _StvpsAi {
    * @returns {string|Object} Response text or parsed JSON if schema provided
    * 
    * @example
-   * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+   * const ai = GeminiApp.newInstance('YOUR_API_KEY');
    * const response = ai.prompt('Explain quantum computing');
    * console.log(response);
    * 
@@ -1146,7 +1146,7 @@ class _StvpsAi {
    * @param {{history: Array, systemInstruction: string}} [options] Chat options
    * @param {Array} [options.history] Initial chat history
    * @param {string} [options.systemInstruction] System instruction
-   * @returns {_StvpsAiChat} Chat session instance
+   * @returns {_GeminiAppChat} Chat session instance
    * 
    * @example
    * const chat = ai.startChat({
@@ -1157,7 +1157,7 @@ class _StvpsAi {
    * const response2 = chat.sendMessage('Can you show me an example?');
    */
   startChat(options = {}) {
-    return new _StvpsAiChat(this, options);
+    return new _GeminiAppChat(this, options);
   }
 
   /**
@@ -1189,7 +1189,7 @@ class _StvpsAi {
         const driveFile = DriveApp.getFileById(urlOrId);
         return this.fileManager.uploadDriveFile(driveFile, displayName);
       } catch (e) {
-        throw new StvpsAiValidationError(`Failed to access Drive file with ID '${urlOrId}': ${e.message}`);
+        throw new GeminiAppValidationError(`Failed to access Drive file with ID '${urlOrId}': ${e.message}`);
       }
     }
 
@@ -1235,7 +1235,7 @@ class _StvpsAi {
 
   /**
    * Get access to the file manager for advanced operations
-   * @returns {_StvpsAiFileManager} File manager instance
+   * @returns {_GeminiAppFileManager} File manager instance
    */
   getFileManager() {
     return this.fileManager;
@@ -1296,7 +1296,7 @@ class _StvpsAi {
             }
           };
         } catch (error) {
-          throw new StvpsAiApiError(
+          throw new GeminiAppApiError(
             `Cannot access Google Drive file '${file}'. Please ensure:\n` +
             `1. You have permission to access the file\n` +
             `2. The file ID/URL is correct\n` +
@@ -1310,7 +1310,7 @@ class _StvpsAi {
 
       // It's a regular URL (not Google Workspace) - mimeType is required
       if (!mimeType) {
-        throw new StvpsAiValidationError(
+        throw new GeminiAppValidationError(
           'mimeType is required when providing a URL or file ID string. ' +
           'Example: ai.promptWithFile(text, url, { mimeType: "audio/mpeg" })'
         );
@@ -1380,7 +1380,7 @@ class _StvpsAi {
         // Retryable errors
         if (statusCode === 429 || statusCode >= 500) {
           const errorMessage = errorData.error?.message || 'Unknown error';
-          lastError = new StvpsAiApiError(
+          lastError = new GeminiAppApiError(
             `API request failed (${statusCode}): ${errorMessage}`,
             statusCode,
             errorData
@@ -1395,7 +1395,7 @@ class _StvpsAi {
 
         // Non-retryable error
         const errorMessage = errorData.error?.message || 'Unknown error';
-        throw new StvpsAiApiError(
+        throw new GeminiAppApiError(
           `API request failed (${statusCode}): ${errorMessage}. ` +
           `Please check your request parameters and API key.`,
           statusCode,
@@ -1403,7 +1403,7 @@ class _StvpsAi {
         );
 
       } catch (error) {
-        if (error instanceof StvpsAiApiError) {
+        if (error instanceof GeminiAppApiError) {
           throw error;
         }
 
@@ -1415,7 +1415,7 @@ class _StvpsAi {
       }
     }
 
-    throw new StvpsAiApiError(
+    throw new GeminiAppApiError(
       `Request failed after ${maxRetries} retries: ${lastError?.message || 'Unknown error'}. ` +
       `This could be due to rate limits or service outages. Please try again later.`,
       0,
@@ -1430,7 +1430,7 @@ class _StvpsAi {
   _formatResponse(response, schema) {
     // Check for blocking or errors
     if (response.promptFeedback?.blockReason) {
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Response was blocked: ${response.promptFeedback.blockReason}. ` +
         `${response.promptFeedback.blockReasonMessage || ''}`,
         400,
@@ -1439,7 +1439,7 @@ class _StvpsAi {
     }
 
     if (!response.candidates || response.candidates.length === 0) {
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         'No response candidates returned. The request may have been blocked or invalid.',
         400,
         response
@@ -1451,7 +1451,7 @@ class _StvpsAi {
     // Only check finishReason if it's a problematic one (not STOP)
     if (candidate.finishReason &&
       !['STOP', 'MAX_TOKENS', 'FINISH_REASON_UNSPECIFIED'].includes(candidate.finishReason)) {
-      throw new StvpsAiApiError(
+      throw new GeminiAppApiError(
         `Response generation stopped: ${candidate.finishReason}. ` +
         `${candidate.finishMessage || ''}`,
         400,
@@ -1474,7 +1474,7 @@ class _StvpsAi {
       try {
         return JSON.parse(text);
       } catch (e) {
-        throw new StvpsAiApiError(
+        throw new GeminiAppApiError(
           `Failed to parse JSON response: ${e.message}. Response text: ${text.substring(0, 200)}...`,
           500,
           response
@@ -1520,7 +1520,7 @@ class _StvpsAi {
 // ============================================================================
 
 /**
- * Create a new StvpsAi instance
+ * Create a new GeminiApp instance
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
@@ -1541,16 +1541,16 @@ class _StvpsAi {
  *   deleteAllFiles: function(number=): Object,
  *   listFiles: function(number=): Object,
  *   fileManager: Object
- * }} StvpsAi instance with prompt methods
+ * }} GeminiApp instance with prompt methods
  * 
  * @example
- * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+ * const ai = GeminiApp.newInstance('YOUR_API_KEY');
  * 
  * @example
- * const ai = StvpsAi.newInstance('YOUR_API_KEY', 'gemini-1.5-pro');
+ * const ai = GeminiApp.newInstance('YOUR_API_KEY', 'gemini-1.5-pro');
  */
 function newInstance(apiKey, model) {
-  return new _StvpsAi(apiKey, model);
+  return new _GeminiApp(apiKey, model);
 }
 
 /**
@@ -1562,7 +1562,7 @@ function newInstance(apiKey, model) {
  */
 
 /**
- * @typedef {Object} StvpsAiInstance
+ * @typedef {Object} GeminiAppInstance
  * @property {function(string, {schema: Object=, model: string=}=): (string|Object)} prompt - Send a simple text prompt. Returns text or JSON object if schema provided.
  * @property {function(string, (Blob|string|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithImage - Send a prompt with one or more images. Returns text or JSON object if schema provided.
  * @property {function(string, (Blob|string|Object|Array), {mimeType: (string|Array)=, schema: Object=, model: string=}=): (string|Object)} promptWithFile - Send a prompt with one or more files (PDF, audio, video). Returns text or JSON object if schema provided.
@@ -1577,21 +1577,21 @@ function newInstance(apiKey, model) {
  */
 
 /**
- * StvpsAi - Simplified Gemini API library
+ * GeminiApp - Simplified Gemini API library
  * 
  * @namespace
- * @property {Function} newInstance - Create a new StvpsAi instance
- * @property {StvpsAiError} Error - Base error class
- * @property {StvpsAiApiError} ApiError - API error class
- * @property {StvpsAiValidationError} ValidationError - Validation error class
+ * @property {Function} newInstance - Create a new GeminiApp instance
+ * @property {GeminiAppError} Error - Base error class
+ * @property {GeminiAppApiError} ApiError - API error class
+ * @property {GeminiAppValidationError} ValidationError - Validation error class
  * 
  * @example
- * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+ * const ai = GeminiApp.newInstance('YOUR_API_KEY');
  * const response = ai.prompt('Hello!');
  */
-var StvpsAi = {
+var GeminiApp = {
   newInstance: newInstance,
-  Error: StvpsAiError,
-  ApiError: StvpsAiApiError,
-  ValidationError: StvpsAiValidationError
+  Error: GeminiAppError,
+  ApiError: GeminiAppApiError,
+  ValidationError: GeminiAppValidationError
 };

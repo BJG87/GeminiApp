@@ -1,6 +1,6 @@
-# StvpsAi TypeScript Definitions
+# GeminiApp TypeScript Definitions
 
-This directory contains TypeScript type definitions for the StvpsAi library. These definitions provide **full IntelliSense and autocomplete** support when using the library in your clasp projects.
+This directory contains TypeScript type definitions for the GeminiApp library. These definitions provide **full IntelliSense and autocomplete** support when using the library in your clasp projects.
 
 ## ⚠️ Important: Apps Script Editor vs Clasp
 
@@ -28,12 +28,12 @@ clasp clone <scriptId>
 
 ### 3. Copy Type Definitions to Your Project
 
-Copy the `stvpsai.d.ts` file to a `types/` folder in your project:
+Copy the `geminiapp.d.ts` file to a `types/` folder in your project:
 
 ```
 your-project/
 ├── types/
-│   └── stvpsai.d.ts
+│   └── geminiapp.d.ts
 ├── src/
 │   └── Code.js
 ├── .clasp.json
@@ -69,11 +69,11 @@ Add these lines at the top of your `.js` or `.gs` files:
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 // Now you get full autocomplete!
 const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-const ai = StvpsAi.newInstance(apiKey);
+const ai = GeminiApp.newInstance(apiKey);
 
 // IntelliSense will show all available methods
 const response = ai.prompt("Hello!"); // ✓ Autocomplete works!
@@ -85,10 +85,10 @@ const response = ai.prompt("Hello!"); // ✓ Autocomplete works!
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 function example1() {
-  const ai = StvpsAi.newInstance('your-api-key');
+  const ai = GeminiApp.newInstance('your-api-key');
   
   // Type 'ai.' and IntelliSense will show all methods:
   // - prompt()
@@ -109,12 +109,12 @@ function example1() {
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 function example2() {
-  const ai = StvpsAi.newInstance('your-api-key');
+  const ai = GeminiApp.newInstance('your-api-key');
   
-  /** @type {StvpsAiSchema} */
+  /** @type {GeminiAppSchema} */
   const schema = {
     type: 'object',
     properties: {
@@ -135,10 +135,10 @@ function example2() {
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 function example3() {
-  const ai = StvpsAi.newInstance('your-api-key');
+  const ai = GeminiApp.newInstance('your-api-key');
   
   const imageUrl = "https://example.com/image.jpg";
   
@@ -157,10 +157,10 @@ function example3() {
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 function example4() {
-  const ai = StvpsAi.newInstance('your-api-key');
+  const ai = GeminiApp.newInstance('your-api-key');
   
   // IntelliSense shows ChatSession type and its methods
   const chat = ai.startChat();
@@ -186,10 +186,10 @@ function example4() {
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 function example5() {
-  const ai = StvpsAi.newInstance('your-api-key');
+  const ai = GeminiApp.newInstance('your-api-key');
   
   const driveFileId = "1abc...xyz";
   
@@ -246,7 +246,7 @@ clasp run functionName
 
 1. **Check file path**: Make sure the reference path is correct
    ```javascript
-   /// <reference path="../types/stvpsai.d.ts" />
+   /// <reference path="../types/geminiapp.d.ts" />
    ```
 
 2. **Enable type checking**: Add `// @ts-check` at the top of your file
@@ -266,7 +266,7 @@ This is expected. Type definitions only work in local development with clasp, no
 ```
 your-clasp-project/
 ├── types/
-│   ├── stvpsai.d.ts          ← Type definitions
+│   ├── geminiapp.d.ts          ← Type definitions
 │   └── README.md             ← This file
 ├── src/
 │   ├── Code.js               ← Your code with type hints

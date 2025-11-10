@@ -1,4 +1,4 @@
-# StvpsAi - Simplified Gemini API Library
+# GeminiApp - Simplified Gemini API Library
 
 A streamlined Google Apps Script library for working with Google's Gemini AI API.
 
@@ -26,7 +26,7 @@ PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', 'your-api-
 
 // Create an instance
 const API_KEY = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-const ai = StvpsAi.newInstance(API_KEY);
+const ai = GeminiApp.newInstance(API_KEY);
 ```
 
 ### 3. Basic Usage
@@ -128,7 +128,7 @@ const response = ai.promptWithFile(
 
 ## Google Workspace Files
 
-StvpsAi automatically handles Google Docs, Sheets, and Slides:
+GeminiApp automatically handles Google Docs, Sheets, and Slides:
 
 ```javascript
 // These all work and are automatically exported as PDF
@@ -237,10 +237,10 @@ try {
   const response = ai.prompt('Hello');
   console.log(response);
 } catch (error) {
-  if (error.name === 'StvpsAiApiError') {
+  if (error.name === 'GeminiAppApiError') {
     console.log('API Error:', error.message);
     console.log('Status:', error.statusCode);
-  } else if (error.name === 'StvpsAiValidationError') {
+  } else if (error.name === 'GeminiAppValidationError') {
     console.log('Validation Error:', error.message);
   } else {
     console.log('Unknown Error:', error.message);

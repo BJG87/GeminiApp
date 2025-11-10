@@ -1,12 +1,12 @@
-# StvpsAi Quick Reference Guide
+# GeminiApp Quick Reference Guide
 
 ## Setup
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 const apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
-const ai = newStvpsAiInstance(apiKey, 'gemini-2.0-flash-exp'); // model is optional
+const ai = newGeminiAppInstance(apiKey, 'gemini-2.0-flash-exp'); // model is optional
 ```
 
 ---
@@ -343,8 +343,8 @@ try {
   const response = ai.prompt("Hello");
 } catch (error) {
   console.error(error.message);
-  // StvpsAiApiError: API request failed
-  // StvpsAiValidationError: Invalid parameters
+  // GeminiAppApiError: API request failed
+  // GeminiAppValidationError: Invalid parameters
 }
 ```
 

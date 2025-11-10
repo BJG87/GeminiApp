@@ -1,14 +1,14 @@
 /**
- * StvpsAi Library Stub for IntelliSense
+ * GeminiApp Library Stub for IntelliSense
  * 
  * INSTRUCTIONS:
- * 1. Add the StvpsAi library to your Apps Script project (Script ID: YOUR_SCRIPT_ID)
+ * 1. Add the GeminiApp library to your Apps Script project (Script ID: YOUR_SCRIPT_ID)
  * 2. Copy this entire file into your project
- * 3. Rename it to something like "StvpsAi-autocomplete"
+ * 3. Rename it to something like "GeminiApp-autocomplete"
  * 4. DO NOT call any functions from this file - it's only for autocomplete
- * 5. Use the actual library: const ai = StvpsAi.newInstance(apiKey)
+ * 5. Use the actual library: const ai = GeminiApp.newInstance(apiKey)
  * 
- * This file provides IntelliSense/autocomplete when using the StvpsAi library.
+ * This file provides IntelliSense/autocomplete when using the GeminiApp library.
  */
 
 /**
@@ -47,7 +47,7 @@
  */
 
 /**
- * @typedef {_StvpsAiInstanceStub} StvpsAiInstance
+ * @typedef {_GeminiAppInstanceStub} GeminiAppInstance
  */
 
 /**
@@ -58,7 +58,7 @@
  * Instance method stubs (for autocomplete)
  * @class
  */
-class _StvpsAiInstanceStub {
+class _GeminiAppInstanceStub {
   /**
    * Send a text-only prompt to the AI
    * @param {string} text - The prompt text
@@ -190,25 +190,25 @@ class _ChatSessionStub {
 }
 
 /**
- * Create a new StvpsAi instance
+ * Create a new GeminiApp instance
  * 
  * @example
- * const ai = StvpsAi.newInstance('your-api-key');
+ * const ai = GeminiApp.newInstance('your-api-key');
  * const response = ai.prompt('Hello!');
  * 
  * @example
- * const ai = StvpsAi.newInstance('your-api-key', 'gemini-2.5-pro');
+ * const ai = GeminiApp.newInstance('your-api-key', 'gemini-2.5-pro');
  * const json = ai.prompt('List 3 colors', { schema: { colors: ['string'] } });
  * 
  * @param {string} apiKey - Google AI API key
  * @param {string} [model='gemini-2.5-flash'] - Model to use
- * @returns {_StvpsAiInstanceStub} StvpsAi instance
+ * @returns {_GeminiAppInstanceStub} GeminiApp instance
  */
 function newInstance(apiKey, model) {
-  return new _StvpsAiInstanceStub();
+  return new _GeminiAppInstanceStub();
 }
 
-// Export the StvpsAi namespace for autocomplete
-var StvpsAi = {
+// Export the GeminiApp namespace for autocomplete
+var GeminiApp = {
   newInstance: newInstance
 };

@@ -1,4 +1,4 @@
-# Using StvpsAi as an Apps Script Library
+# Using GeminiApp as an Apps Script Library
 
 ## Installation
 
@@ -6,11 +6,11 @@
    - In your Apps Script project, click the `+` next to "Libraries"
    - Enter the Script ID: `[YOUR_SCRIPT_ID_HERE]`
    - Select the latest version
-   - The identifier will be `StvpsAi`
+   - The identifier will be `GeminiApp`
 
 2. **Enable IntelliSense/Autocomplete** (Recommended)
-   - Copy the entire contents of `types/StvpsAi-stub.js` from this repository
-   - In your Apps Script project, create a new file called `StvpsAi-autocomplete`
+   - Copy the entire contents of `types/GeminiApp-stub.js` from this repository
+   - In your Apps Script project, create a new file called `GeminiApp-autocomplete`
    - Paste the stub code
    - **Important**: This file is only for autocomplete - don't call functions from it!
 
@@ -23,10 +23,10 @@
 const API_KEY = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
 
 // Create an AI instance
-const ai = StvpsAi.newInstance(API_KEY);
+const ai = GeminiApp.newInstance(API_KEY);
 
 // Or specify a model
-const ai = StvpsAi.newInstance(API_KEY, 'gemini-2.5-pro');
+const ai = GeminiApp.newInstance(API_KEY, 'gemini-2.5-pro');
 ```
 
 ### Simple Text Prompts
@@ -183,9 +183,9 @@ try {
   const response = ai.prompt('Hello');
   console.log(response);
 } catch (error) {
-  if (error.name === 'StvpsAiApiError') {
+  if (error.name === 'GeminiAppApiError') {
     console.error('API Error:', error.message);
-  } else if (error.name === 'StvpsAiValidationError') {
+  } else if (error.name === 'GeminiAppValidationError') {
     console.error('Validation Error:', error.message);
   } else {
     console.error('Unexpected Error:', error);

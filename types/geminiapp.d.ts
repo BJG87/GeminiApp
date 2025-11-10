@@ -6,12 +6,12 @@
 /**
  * Schema definition for structured JSON responses
  */
-interface StvpsAiSchema {
+interface GeminiAppSchema {
   type: 'object' | 'array' | 'string' | 'number' | 'boolean';
   properties?: {
-    [key: string]: StvpsAiSchema;
+    [key: string]: GeminiAppSchema;
   };
-  items?: StvpsAiSchema;
+  items?: GeminiAppSchema;
   description?: string;
   required?: string[];
   enum?: any[];
@@ -20,7 +20,7 @@ interface StvpsAiSchema {
 /**
  * File part for multi-modal prompts (images, PDFs, audio, video)
  */
-interface StvpsAiFilePart {
+interface GeminiAppFilePart {
   /** URL, Google Drive file ID, or Drive URL */
   url?: string;
   /** MIME type (required for URLs, optional for Drive IDs) */
@@ -37,25 +37,25 @@ interface StvpsAiFilePart {
 /**
  * Options for prompts with files
  */
-interface StvpsAiFileOptions {
+interface GeminiAppFileOptions {
   /** MIME type (required for URLs) */
   mimeType?: string;
   /** Schema for structured JSON output */
-  schema?: StvpsAiSchema;
+  schema?: GeminiAppSchema;
 }
 
 /**
  * Options for basic prompts
  */
-interface StvpsAiPromptOptions {
+interface GeminiAppPromptOptions {
   /** Schema for structured JSON output */
-  schema?: StvpsAiSchema;
+  schema?: GeminiAppSchema;
 }
 
 /**
  * Uploaded file metadata
  */
-interface StvpsAiUploadedFile {
+interface GeminiAppUploadedFile {
   /** File name */
   name: string;
   /** File URI for use in API calls */
@@ -77,8 +77,8 @@ interface StvpsAiUploadedFile {
 /**
  * File list response
  */
-interface StvpsAiFileListResponse {
-  files: StvpsAiUploadedFile[];
+interface GeminiAppFileListResponse {
+  files: GeminiAppUploadedFile[];
   nextPageToken?: string;
 }
 
@@ -86,7 +86,7 @@ interface StvpsAiFileListResponse {
 /**
  * Message in chat history
  */
-interface StvpsAiChatMessage {
+interface GeminiAppChatMessage {
   role: 'user' | 'model';
   parts: Array<{ text?: string; inlineData?: any; fileData?: any }>;
 }
@@ -98,14 +98,14 @@ interface StvpsAiChatMessage {
 /**
  * Chat session for multi-turn conversations
  */
-interface StvpsAiChatSession {
+interface GeminiAppChatSession {
   /**
    * Send a text message in the chat
    * @param text - The message text
    * @param options - Optional schema for structured output
    * @returns Text response or parsed JSON object if schema provided
    */
-  sendMessage(text: string, options?: StvpsAiPromptOptions): string | object;
+  sendMessage(text: string, options?: GeminiAppPromptOptions): string | object;
 
   /**
    * Send a message with a single image
@@ -114,7 +114,7 @@ interface StvpsAiChatSession {
    * @param options - Optional mimeType and schema
    * @returns Text response or parsed JSON object if schema provided
    */
-  sendMessageWithImage(text: string, image: string | StvpsAiFilePart, options?: StvpsAiFileOptions): string | object;
+  sendMessageWithImage(text: string, image: string | GeminiAppFilePart, options?: GeminiAppFileOptions): string | object;
 
   /**
    * Send a message with multiple images
@@ -123,7 +123,7 @@ interface StvpsAiChatSession {
    * @param options - Optional mimeType and schema
    * @returns Text response or parsed JSON object if schema provided
    */
-  sendMessageWithImages(text: string, images: (string | StvpsAiFilePart)[], options?: StvpsAiFileOptions): string | object;
+  sendMessageWithImages(text: string, images: (string | GeminiAppFilePart)[], options?: GeminiAppFileOptions): string | object;
 
   /**
    * Send a message with a single file
@@ -132,7 +132,7 @@ interface StvpsAiChatSession {
    * @param options - Required mimeType for URLs, optional schema
    * @returns Text response or parsed JSON object if schema provided
    */
-  sendMessageWithFile(text: string, file: string | StvpsAiFilePart, options?: StvpsAiFileOptions): string | object;
+  sendMessageWithFile(text: string, file: string | GeminiAppFilePart, options?: GeminiAppFileOptions): string | object;
 
   /**
    * Send a message with multiple files
@@ -141,13 +141,13 @@ interface StvpsAiChatSession {
    * @param options - Required mimeType for URLs, optional schema
    * @returns Text response or parsed JSON object if schema provided
    */
-  sendMessageWithFiles(text: string, files: (string | StvpsAiFilePart)[], options?: StvpsAiFileOptions): string | object;
+  sendMessageWithFiles(text: string, files: (string | GeminiAppFilePart)[], options?: GeminiAppFileOptions): string | object;
 
   /**
    * Get the conversation history
    * @returns Array of message objects
    */
-  getHistory(): StvpsAiChatMessage[];
+  getHistory(): GeminiAppChatMessage[];
 
   /**
    * Clear the conversation history
@@ -160,9 +160,9 @@ interface StvpsAiChatSession {
 // ========================================
 
 /**
- * Main StvpsAi instance for interacting with Google Gemini API
+ * Main GeminiApp instance for interacting with Google Gemini API
  */
-interface StvpsAiInstance {
+interface GeminiAppInstance {
   // ========================================
   // Simple Prompts
   // ========================================
@@ -176,7 +176,7 @@ interface StvpsAiInstance {
    * const response = ai.prompt("Tell me a joke");
    * const structured = ai.prompt("List 3 colors", { schema: colorSchema });
    */
-  prompt(text: string, options?: StvpsAiPromptOptions): string | object;
+  prompt(text: string, options?: GeminiAppPromptOptions): string | object;
 
   // ========================================
   // Prompts with Images
@@ -191,7 +191,7 @@ interface StvpsAiInstance {
    * @example
    * const response = ai.promptWithImage("What's in this image?", imageUrl, { mimeType: "image/jpeg" });
    */
-  promptWithImage(text: string, image: string | StvpsAiFilePart, options?: StvpsAiFileOptions): string | object;
+  promptWithImage(text: string, image: string | GeminiAppFilePart, options?: GeminiAppFileOptions): string | object;
 
   /**
    * Send a prompt with multiple images
@@ -202,7 +202,7 @@ interface StvpsAiInstance {
    * @example
    * const response = ai.promptWithImages("Compare these images", [url1, url2], { mimeType: "image/jpeg" });
    */
-  promptWithImages(text: string, images: (string | StvpsAiFilePart)[], options?: StvpsAiFileOptions): string | object;
+  promptWithImages(text: string, images: (string | GeminiAppFilePart)[], options?: GeminiAppFileOptions): string | object;
 
   // ========================================
   // Prompts with Files
@@ -218,7 +218,7 @@ interface StvpsAiInstance {
    * const response = ai.promptWithFile("Transcribe this", audioUrl, { mimeType: "audio/mpeg" });
    * const driveResponse = ai.promptWithFile("Summarize this doc", driveFileId);
    */
-  promptWithFile(text: string, file: string | StvpsAiFilePart, options?: StvpsAiFileOptions): string | object;
+  promptWithFile(text: string, file: string | GeminiAppFilePart, options?: GeminiAppFileOptions): string | object;
 
   /**
    * Send a prompt with multiple files
@@ -229,7 +229,7 @@ interface StvpsAiInstance {
    * @example
    * const response = ai.promptWithFiles("Analyze these docs", [pdf1, pdf2], { mimeType: "application/pdf" });
    */
-  promptWithFiles(text: string, files: (string | StvpsAiFilePart)[], options?: StvpsAiFileOptions): string | object;
+  promptWithFiles(text: string, files: (string | GeminiAppFilePart)[], options?: GeminiAppFileOptions): string | object;
 
   // ========================================
   // Chat Sessions
@@ -243,7 +243,7 @@ interface StvpsAiInstance {
    * const response1 = chat.sendMessage("Hello");
    * const response2 = chat.sendMessage("Tell me more");
    */
-  startChat(): StvpsAiChatSession;
+  startChat(): GeminiAppChatSession;
 
   // ========================================
   // File Management
@@ -258,14 +258,14 @@ interface StvpsAiInstance {
    * const uploaded = ai.uploadFile(driveFileId);
    * const response = ai.promptWithFile("Analyze this", { uri: uploaded.uri, mimeType: uploaded.mimeType });
    */
-  uploadFile(file: string | GoogleAppsScript.Base.Blob, options?: { mimeType?: string }): StvpsAiUploadedFile;
+  uploadFile(file: string | GoogleAppsScript.Base.Blob, options?: { mimeType?: string }): GeminiAppUploadedFile;
 
   /**
    * Get metadata for an uploaded file
    * @param fileName - File name (e.g., "files/abc123")
    * @returns File metadata
    */
-  getFile(fileName: string): StvpsAiUploadedFile;
+  getFile(fileName: string): GeminiAppUploadedFile;
 
   /**
    * List all uploaded files
@@ -273,7 +273,7 @@ interface StvpsAiInstance {
    * @param pageToken - Token for pagination
    * @returns List of files and optional next page token
    */
-  listFiles(pageSize?: number, pageToken?: string): StvpsAiFileListResponse;
+  listFiles(pageSize?: number, pageToken?: string): GeminiAppFileListResponse;
 
   /**
    * Delete an uploaded file
@@ -293,19 +293,19 @@ interface StvpsAiInstance {
 // ========================================
 
 /**
- * StvpsAi Library - Main entry point
+ * GeminiApp Library - Main entry point
  */
-interface StvpsAiLibrary {
+interface GeminiAppLibrary {
   /**
-   * Create a new StvpsAi instance
+   * Create a new GeminiApp instance
    * @param apiKey - Your Gemini API key
    * @param model - Optional model name (default: "gemini-2.0-flash-exp")
    * @returns AI instance
    * @example
-   * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+   * const ai = GeminiApp.newInstance('YOUR_API_KEY');
    * const response = ai.prompt('Hello!');
    */
-  newInstance(apiKey: string, model?: string): StvpsAiInstance;
+  newInstance(apiKey: string, model?: string): GeminiAppInstance;
 
   /**
    * List all uploaded files (standalone helper)
@@ -323,19 +323,19 @@ interface StvpsAiLibrary {
 // ========================================
 
 /**
- * StvpsAi global variable (available when library is added to Apps Script project)
+ * GeminiApp global variable (available when library is added to Apps Script project)
  */
-declare namespace StvpsAi {
+declare namespace GeminiApp {
   /**
-   * Create a new StvpsAi instance
+   * Create a new GeminiApp instance
    * @param apiKey - Your Gemini API key
    * @param model - Optional model name (default: "gemini-2.0-flash-exp")
    * @returns AI instance
    * @example
-   * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+   * const ai = GeminiApp.newInstance('YOUR_API_KEY');
    * const response = ai.prompt('Hello!');
    */
-  function newInstance(apiKey: string, model?: string): StvpsAiInstance;
+  function newInstance(apiKey: string, model?: string): GeminiAppInstance;
 
   /**
    * List all uploaded files (standalone helper)

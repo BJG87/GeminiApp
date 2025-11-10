@@ -1,13 +1,13 @@
-# Example: Using StvpsAi Type Definitions in Your Project
+# Example: Using GeminiApp Type Definitions in Your Project
 
-This example shows how to set up a clasp project with full IntelliSense support for StvpsAi.
+This example shows how to set up a clasp project with full IntelliSense support for GeminiApp.
 
 ## Project Structure
 
 ```
 my-stvpsai-project/
 ├── types/
-│   └── stvpsai.d.ts          ← Copy from StvpsAi library
+│   └── geminiapp.d.ts          ← Copy from GeminiApp library
 ├── src/
 │   ├── Code.js               ← Your main code
 │   └── Config.js             ← Configuration
@@ -23,7 +23,7 @@ my-stvpsai-project/
 ```bash
 mkdir my-stvpsai-project
 cd my-stvpsai-project
-clasp create --type standalone --title "My StvpsAi Project"
+clasp create --type standalone --title "My GeminiApp Project"
 ```
 
 ### 2. Create Directory Structure
@@ -35,7 +35,7 @@ mkdir src
 
 ### 3. Copy Type Definitions
 
-Copy `stvpsai.d.ts` from the StvpsAi library into your `types/` folder.
+Copy `geminiapp.d.ts` from the GeminiApp library into your `types/` folder.
 
 ### 4. Create tsconfig.json
 
@@ -75,7 +75,7 @@ Create `src/Code.js`:
 
 ```javascript
 // @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
+/// <reference path="../types/geminiapp.d.ts" />
 
 /**
  * Initialize the AI instance
@@ -85,7 +85,7 @@ function getAi() {
   if (!apiKey) {
     throw new Error('GEMINI_API_KEY not found in Script Properties');
   }
-  return newStvpsAiInstance(apiKey);
+  return newGeminiAppInstance(apiKey);
 }
 
 /**
@@ -103,7 +103,7 @@ function exampleSimplePrompt() {
 function exampleStructuredOutput() {
   const ai = getAi();
   
-  /** @type {StvpsAi.Schema} */
+  /** @type {GeminiApp.Schema} */
   const schema = {
     type: 'object',
     properties: {
@@ -147,7 +147,7 @@ function examplePdfAnalysis() {
   
   const drivePdfId = "1def...xyz";
   
-  /** @type {StvpsAi.Schema} */
+  /** @type {GeminiApp.Schema} */
   const schema = {
     type: 'object',
     properties: {
@@ -259,7 +259,7 @@ function exampleMultiImage() {
     "1image3...xyz"
   ];
   
-  /** @type {StvpsAi.Schema} */
+  /** @type {GeminiApp.Schema} */
   const schema = {
     type: 'object',
     properties: {
