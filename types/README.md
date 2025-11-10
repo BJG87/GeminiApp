@@ -209,39 +209,6 @@ function example5() {
 }
 ```
 
-### Example 6: Job Queue System
-
-```javascript
-// @ts-check
-/// <reference path="../types/stvpsai.d.ts" />
-
-// Required: User must implement this function
-function processJobs() {
-  StvpsAi.JobQueue.processJobsInternal();
-}
-
-function example6() {
-  // Set max concurrent jobs
-  StvpsAi.JobQueue.setMaxConcurrentJobs(3);
-  
-  // Add jobs
-  const jobId1 = StvpsAi.JobQueue.addJob({ task: "analyze", file: "doc1.pdf" });
-  const jobId2 = StvpsAi.JobQueue.addJob({ task: "summarize", file: "doc2.pdf" });
-  
-  // IntelliSense shows all JobQueue methods:
-  // - addJob()
-  // - addJobs()
-  // - getQueueStats()
-  // - getFailedJobs()
-  // - clearFailedJobs()
-  // - etc.
-  
-  const stats = StvpsAi.JobQueue.getQueueStats();
-  console.log(`Total jobs: ${stats.total}`);
-  console.log(`Pending: ${stats.pending}`);
-}
-```
-
 ## What You Get with IntelliSense
 
 1. **Method Autocomplete**: Type `ai.` and see all available methods

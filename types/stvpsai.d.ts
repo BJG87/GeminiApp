@@ -82,41 +82,6 @@ interface StvpsAiFileListResponse {
   nextPageToken?: string;
 }
 
-/**
- * Job in the queue
- */
-interface StvpsAiJob {
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  data: any;
-  createdAt: number;
-  processingStartedAt?: number;
-  completedAt?: number;
-  error?: string;
-  retryCount?: number;
-  result?: any;
-}
-
-/**
- * Failed job details
- */
-interface StvpsAiFailedJob {
-  job: StvpsAiJob;
-  reason: string;
-  timestamp: number;
-}
-
-/**
- * Queue statistics
- */
-interface StvpsAiQueueStats {
-  total: number;
-  pending: number;
-  processing: number;
-  completed: number;
-  failed: number;
-  maxConcurrent: number;
-}
 
 /**
  * Message in chat history
@@ -324,86 +289,6 @@ interface StvpsAiInstance {
 }
 
 // ========================================
-// Job Queue Interface
-// ========================================
-
-/**
- * Job queue system for background processing
- */
-interface StvpsAiJobQueue {
-  /**
-   * Set maximum number of concurrent jobs (default: 1)
-   * @param max - Maximum concurrent jobs
-   */
-  setMaxConcurrentJobs(max: number): void;
-
-  /**
-   * Get maximum concurrent jobs setting
-   */
-  getMaxConcurrentJobs(): number;
-
-  /**
-   * Add a single job to the queue
-   * @param jobData - Job data to process
-   * @returns Job ID
-   */
-  addJob(jobData: any): string;
-
-  /**
-   * Add multiple jobs to the queue
-   * @param jobsData - Array of job data
-   * @returns Array of job IDs
-   */
-  addJobs(jobsData: any[]): string[];
-
-  /**
-   * Process jobs in the queue
-   * Note: User must implement processJobs() function that calls StvpsAi.JobQueue.processJobsInternal()
-   */
-  processJobsInternal(): void;
-
-  /**
-   * Stop processing jobs (removes trigger)
-   */
-  stopProcessingJobs(): void;
-
-  /**
-   * Get statistics about the job queue
-   */
-  getQueueStats(): StvpsAiQueueStats;
-
-  /**
-   * Get list of failed jobs
-   */
-  getFailedJobs(): StvpsAiFailedJob[];
-
-  /**
-   * Clear all failed jobs
-   */
-  clearFailedJobs(): void;
-
-  /**
-   * Get a specific job by ID
-   */
-  getJob(jobId: string): StvpsAiJob | null;
-
-  /**
-   * Get all jobs with a specific status
-   */
-  getJobsByStatus(status: 'pending' | 'processing' | 'completed' | 'failed'): StvpsAiJob[];
-
-  /**
-   * Clear completed jobs from the queue
-   */
-  clearCompletedJobs(): void;
-
-  /**
-   * Clear all jobs from the queue
-   */
-  clearAllJobs(): void;
-}
-
-// ========================================
 // Main Library Interface
 // ========================================
 
@@ -423,11 +308,6 @@ interface StvpsAiLibrary {
   newInstance(apiKey: string, model?: string): StvpsAiInstance;
 
   /**
-   * Job queue functionality
-   */
-  JobQueue: StvpsAiJobQueue;
-
-  /**
    * List all uploaded files (standalone helper)
    */
   listUploadedFiles(): void;
@@ -445,25 +325,26 @@ interface StvpsAiLibrary {
 /**
  * StvpsAi global variable (available when library is added to Apps Script project)
  */
-declare const StvpsAi: StvpsAiLibrary;
+declare namespace StvpsAi {
+  /**
+   * Create a new StvpsAi instance
+   * @param apiKey - Your Gemini API key
+   * @param model - Optional model name (default: "gemini-2.0-flash-exp")
+   * @returns AI instance
+   * @example
+   * const ai = StvpsAi.newInstance('YOUR_API_KEY');
+   * const response = ai.prompt('Hello!');
+   */
+  function newInstance(apiKey: string, model?: string): StvpsAiInstance;
 
-// ========================================
-// Export for TypeScript modules
-// ========================================
+  /**
+   * List all uploaded files (standalone helper)
+   */
+  function listUploadedFiles(): void;
 
-export {
-  StvpsAiLibrary,
-  StvpsAiInstance,
-  StvpsAiChatSession,
-  StvpsAiJobQueue,
-  StvpsAiSchema,
-  StvpsAiFilePart,
-  StvpsAiFileOptions,
-  StvpsAiPromptOptions,
-  StvpsAiUploadedFile,
-  StvpsAiFileListResponse,
-  StvpsAiJob,
-  StvpsAiFailedJob,
-  StvpsAiQueueStats,
-  StvpsAiChatMessage,
-};
+  /**
+   * Delete all uploaded files (standalone helper)
+   */
+  function cleanupAllFiles(): void;
+}
+

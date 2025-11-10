@@ -12,7 +12,6 @@ A streamlined Google Apps Script library for working with Google's Gemini AI API
 - ✅ Chat mode with context
 - ✅ File upload API for large files
 - ✅ Automatic retry with exponential backoff
-- ✅ Job queue with concurrency control
 - ✅ Clear, descriptive error messages
 
 ## Quick Start
@@ -214,90 +213,6 @@ const response2 = ai.promptWithFile(
 ai.deleteFile(uploadedFile.name);
 ```
 
-## Job Queue
-
-Process multiple AI requests sequentially with concurrency control.
-
-### Required Setup
-
-**IMPORTANT:** To use the job queue, you MUST add this helper function to your project:
-
-```javascript
-/**
- * Required helper function for job queue
- * This allows the library to work with your project's trigger system
- */
-function processJobs() {
-  StvpsAi.JobQueue.processJobs();
-}
-```
-
-### Usage
-
-```javascript
-// Add a single job
-StvpsAi.JobQueue.addJob({
-  method: 'prompt',
-  params: ['Analyze this text'],
-  callbackFunctionName: 'handleResult'
-});
-
-// Add multiple jobs at once
-StvpsAi.JobQueue.addJobs([
-  {
-    method: 'prompt',
-    params: ['First task'],
-    callbackFunctionName: 'handleResult1'
-  },
-  {
-    method: 'promptWithImage',
-    params: ['Describe image', imageUrl, { mimeType: 'image/jpeg' }],
-    callbackFunctionName: 'handleResult2'
-  }
-]);
-
-// Callback function receives the result
-function handleResult(result) {
-  if (result.success) {
-    console.log('Job completed:', result.data);
-  } else {
-    console.log('Job failed:', result.error);
-  }
-}
-
-// Set how many jobs run simultaneously (default is 1)
-StvpsAi.JobQueue.setConcurrentJobs(3);
-
-// Check queue status
-const stats = StvpsAi.JobQueue.getQueueStats();
-console.log('Pending:', stats.pending);
-console.log('In Progress:', stats.inProgress);
-console.log('Completed:', stats.completed);
-console.log('Failed:', stats.failed);
-
-// View failed jobs
-const failedJobs = StvpsAi.JobQueue.getFailedJobs();
-failedJobs.forEach(job => {
-  console.log('Failed:', job.error, 'at', job.failedAt);
-});
-
-// Clear completed jobs
-StvpsAi.JobQueue.clearCompletedJobs();
-
-// Stop processing (removes the trigger)
-StvpsAi.JobQueue.stopProcessingJobs();
-```
-
-### How the Job Queue Works
-
-1. Jobs are added to a queue stored in Script Properties
-2. A 1-minute trigger is created automatically
-3. Every minute, the `processJobs()` function runs
-4. It processes up to N jobs concurrently (based on your setting)
-5. When jobs complete, your callback function is called with the result
-6. When the queue is empty, the trigger is automatically removed
-7. Failed jobs are tracked separately and can be reviewed
-
 ## File Management
 
 ```javascript
@@ -420,15 +335,6 @@ ai.promptWithFile('Analyze', [
 - `uploadDriveFile(driveFile)` - Upload from Drive (recommended for large files)
 - `deleteFile(fileName)` - Delete uploaded file
 - `listFiles()` - List all uploaded files
-
-### Job Queue Methods (Static)
-- `JobQueue.addJob(job)` - Add single job
-- `JobQueue.addJobs(jobs)` - Add multiple jobs
-- `JobQueue.setConcurrentJobs(count)` - Set concurrency
-- `JobQueue.getQueueStats()` - Get queue statistics
-- `JobQueue.getFailedJobs()` - View failed jobs
-- `JobQueue.clearCompletedJobs()` - Clear completed
-- `JobQueue.stopProcessingJobs()` - Stop processing
 
 ## License
 

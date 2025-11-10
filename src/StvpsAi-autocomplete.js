@@ -68,29 +68,6 @@
  */
 
 /**
- * @typedef {Object} JobQueueConfig
- * @property {string} id - Unique job ID
- * @property {string} type - Job type identifier
- * @property {string} handler - Function name to call for processing
- * @property {Object} data - Job data to pass to handler
- */
-
-/**
- * @typedef {Object} JobQueue
- * @property {function(): void} processJobs - Process pending jobs (called by trigger)
- * @property {function(JobQueueConfig): void} addJob - Add a single job to queue
- * @property {function(Array<JobQueueConfig>): void} addJobs - Add multiple jobs to queue
- * @property {function(number): void} setMaxConcurrentJobs - Set max concurrent jobs (1-10)
- * @property {function(): number} getMaxConcurrentJobs - Get max concurrent jobs
- * @property {function(): void} startProcessingJobs - Start job processing trigger
- * @property {function(): void} stopProcessingJobs - Stop job processing trigger
- * @property {function(): Object} getQueueStats - Get queue statistics
- * @property {function(): Array} listFailedJobs - List all failed jobs
- * @property {function(): void} clearFailedJobs - Clear failed jobs list
- * @property {function(string): boolean} removeFailedJob - Remove specific failed job
- */
-
-/**
  * Main StvpsAi namespace - DO NOT CALL ANYTHING FROM THIS FILE
  * This file only provides IntelliSense/autocomplete support
  * @namespace StvpsAiAutocomplete

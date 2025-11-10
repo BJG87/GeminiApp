@@ -63,37 +63,37 @@ class _StvpsAiInstanceStub {
    * Send a text-only prompt to the AI
    * @param {string} text - The prompt text
    * @param {PromptOptions} [options] - Optional configuration
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    * @example
    * const response = ai.prompt('Hello!');
    * const json = ai.prompt('List 3 colors', { schema: { colors: ['string'] } });
    */
-  prompt(text, options) {}
-  
+  prompt(text, options) { return ''; }
+
   /**
    * Send a prompt with one or more images
    * @param {string} text - The prompt text
    * @param {Blob|string|Array<Blob|string>} images - Image(s) as Blob, URL, Drive ID, or array
    * @param {FileOptions} [options] - Optional configuration including mimeType
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    * @example
    * const response = ai.promptWithImage('What is in this image?', imageBlob);
    * const response = ai.promptWithImage('Compare these', [url1, url2], { mimeType: ['image/jpeg', 'image/png'] });
    */
-  promptWithImage(text, images, options) {}
-  
+  promptWithImage(text, images, options) { return ''; }
+
   /**
    * Send a prompt with one or more files (PDF, audio, video, etc.)
    * @param {string} text - The prompt text
    * @param {Blob|string|Object|Array<Blob|string|Object>} files - File(s) as Blob, URL, Drive ID, {uri, mimeType}, or array
    * @param {FileOptions} [options] - Optional configuration including mimeType
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    * @example
    * const response = ai.promptWithFile('Summarize this PDF', pdfBlob, { mimeType: 'application/pdf' });
    * const response = ai.promptWithFile('Transcribe', audioUrl, { mimeType: 'audio/mpeg' });
    */
-  promptWithFile(text, files, options) {}
-  
+  promptWithFile(text, files, options) { return ''; }
+
   /**
    * Start a new chat session
    * @returns {_ChatSessionStub} Chat session instance
@@ -102,8 +102,8 @@ class _StvpsAiInstanceStub {
    * const response1 = chat.sendMessage('Hello!');
    * const response2 = chat.sendMessage('Tell me more');
    */
-  startChat() {}
-  
+  startChat() { return new _ChatSessionStub(); }
+
   /**
    * Upload a file to Gemini API for reuse
    * @param {Blob|string} file - File as Blob or Drive ID
@@ -114,8 +114,8 @@ class _StvpsAiInstanceStub {
    * const uploaded = ai.uploadFile(blob, 'mydoc.pdf', 'application/pdf');
    * const response = ai.promptWithFile('Summarize', { uri: uploaded.uri, mimeType: uploaded.mimeType });
    */
-  uploadFile(file, displayName, mimeType) {}
-  
+  uploadFile(file, displayName, mimeType) { return { uri: '', name: '', mimeType: '' }; }
+
   /**
    * Upload a file from URL to Gemini API
    * @param {string} url - URL to file
@@ -123,36 +123,36 @@ class _StvpsAiInstanceStub {
    * @param {string} [mimeType] - MIME type (required)
    * @returns {UploadedFile} Uploaded file info
    */
-  uploadFileFromUrl(url, displayName, mimeType) {}
-  
+  uploadFileFromUrl(url, displayName, mimeType) { return { uri: '', name: '', mimeType: '' }; }
+
   /**
    * Delete an uploaded file
    * @param {string} fileName - File name/ID to delete
    * @returns {void}
    */
-  deleteFile(fileName) {}
-  
+  deleteFile(fileName) { }
+
   /**
    * Delete multiple uploaded files
    * @param {Array<string>} fileNames - Array of file names/IDs
    * @param {boolean} [continueOnError=true] - Continue deleting if one fails
    * @returns {DeleteResult} Deletion results
    */
-  deleteFiles(fileNames, continueOnError) {}
-  
+  deleteFiles(fileNames, continueOnError) { return { deleted: [], failed: [] }; }
+
   /**
    * Delete all uploaded files
    * @param {number} [batchSize=10] - Number of files to delete per batch
    * @returns {{deleted: number, failed: number}} Deletion statistics
    */
-  deleteAllFiles(batchSize) {}
-  
+  deleteAllFiles(batchSize) { return { deleted: 0, failed: 0 }; }
+
   /**
    * List all uploaded files
    * @param {number} [pageSize=100] - Number of files per page
    * @returns {Array<FileInfo>} Array of file information
    */
-  listFiles(pageSize) {}
+  listFiles(pageSize) { return []; }
 }
 
 /**
@@ -164,29 +164,29 @@ class _ChatSessionStub {
    * Send a text message in the chat
    * @param {string} text - The message text
    * @param {ChatOptions} [options] - Optional configuration
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    * @example
    * const response = chat.sendMessage('What is 5 + 5?');
    */
-  sendMessage(text, options) {}
-  
+  sendMessage(text, options) { return ''; }
+
   /**
    * Send a message with one or more images
    * @param {string} text - The message text
    * @param {Blob|string|Array<Blob|string>} images - Image(s) as Blob, URL, Drive ID, or array
    * @param {ChatFileOptions} [options] - Optional configuration including mimeType
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    */
-  sendMessageWithImage(text, images, options) {}
-  
+  sendMessageWithImage(text, images, options) { return ''; }
+
   /**
    * Send a message with one or more files
    * @param {string} text - The message text
    * @param {Blob|string|Object|Array<Blob|string|Object>} files - File(s) as Blob, URL, Drive ID, {uri, mimeType}, or array
    * @param {ChatFileOptions} [options] - Optional configuration including mimeType
-   * @returns {string|Object} Response text or parsed JSON object
+   * @returns {(string|Object)} Response text or parsed JSON object (JSON if schema provided)
    */
-  sendMessageWithFile(text, files, options) {}
+  sendMessageWithFile(text, files, options) { return ''; }
 }
 
 /**
@@ -205,119 +205,10 @@ class _ChatSessionStub {
  * @returns {_StvpsAiInstanceStub} StvpsAi instance
  */
 function newInstance(apiKey, model) {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.newInstance() from the library.');
-}
-
-/**
- * Add a job to the queue for background processing
- * 
- * @example
- * StvpsAi.addJob({ type: 'transcribe', fileId: '123' });
- * 
- * @param {Object} jobData - Job data/payload
- * @returns {string} Job ID
- */
-function addJob(jobData) {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.addJob() from the library.');
-}
-
-/**
- * Add multiple jobs to the queue
- * 
- * @example
- * StvpsAi.addJobs([{ type: 'process', id: 1 }, { type: 'process', id: 2 }]);
- * 
- * @param {Array<Object>} jobs - Array of job data
- * @returns {Array<string>} Array of job IDs
- */
-function addJobs(jobs) {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.addJobs() from the library.');
-}
-
-/**
- * Get queue statistics
- * 
- * @example
- * const stats = StvpsAi.getQueueStats();
- * console.log(stats.pending + ' jobs pending');
- * 
- * @returns {{pending: number, completed: number, failed: number}} Queue statistics
- */
-function getQueueStats() {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.getQueueStats() from the library.');
-}
-
-/**
- * Get failed jobs list
- * 
- * @example
- * const failed = StvpsAi.getFailedJobs();
- * failed.forEach(job => console.log(job.error));
- * 
- * @returns {Array<{id: string, data: Object, error: string, timestamp: string}>} Failed jobs
- */
-function getFailedJobs() {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.getFailedJobs() from the library.');
-}
-
-/**
- * Clear all failed jobs
- * 
- * @example
- * StvpsAi.clearFailedJobs();
- * 
- * @returns {void}
- */
-function clearFailedJobs() {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.clearFailedJobs() from the library.');
-}
-
-/**
- * Start job queue processing (creates a time-driven trigger)
- * 
- * @example
- * StvpsAi.startJobQueue();
- * 
- * @returns {void}
- */
-function startJobQueue() {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.startJobQueue() from the library.');
-}
-
-/**
- * Stop job queue processing (removes triggers)
- * 
- * @example
- * StvpsAi.stopJobQueue();
- * 
- * @returns {void}
- */
-function stopJobQueue() {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.stopJobQueue() from the library.');
-}
-
-/**
- * Set maximum concurrent jobs
- * 
- * @example
- * StvpsAi.setMaxConcurrentJobs(3); // Allow 3 jobs to run simultaneously
- * 
- * @param {number} max - Maximum concurrent jobs (1-10)
- * @returns {void}
- */
-function setMaxConcurrentJobs(max) {
-  throw new Error('This is a stub file for autocomplete only. Use StvpsAi.setMaxConcurrentJobs() from the library.');
+  return new _StvpsAiInstanceStub();
 }
 
 // Export the StvpsAi namespace for autocomplete
 var StvpsAi = {
-  newInstance: newInstance,
-  addJob: addJob,
-  addJobs: addJobs,
-  getQueueStats: getQueueStats,
-  getFailedJobs: getFailedJobs,
-  clearFailedJobs: clearFailedJobs,
-  startJobQueue: startJobQueue,
-  stopJobQueue: stopJobQueue,
-  setMaxConcurrentJobs: setMaxConcurrentJobs
+  newInstance: newInstance
 };

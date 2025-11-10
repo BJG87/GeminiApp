@@ -248,45 +248,7 @@ function exampleFileReuse() {
 }
 
 /**
- * Example 8: Job queue for batch processing
- */
-function exampleJobQueue() {
-  // Set up concurrent processing
-  StvpsAi.JobQueue.setMaxConcurrentJobs(3);
-  
-  // Add multiple files to process
-  const fileIds = [
-    "1abc...1",
-    "1abc...2",
-    "1abc...3",
-    "1abc...4",
-    "1abc...5"
-  ];
-  
-  const jobs = fileIds.map(fileId => ({
-    type: 'summarize',
-    fileId: fileId
-  }));
-  
-  const jobIds = StvpsAi.JobQueue.addJobs(jobs);
-  console.log(`Added ${jobIds.length} jobs`);
-  
-  // Check stats
-  const stats = StvpsAi.JobQueue.getQueueStats();
-  console.log(`Total: ${stats.total}`);
-  console.log(`Pending: ${stats.pending}`);
-  console.log(`Max concurrent: ${stats.maxConcurrent}`);
-}
-
-/**
- * Required for job queue system
- */
-function processJobs() {
-  StvpsAi.JobQueue.processJobsInternal();
-}
-
-/**
- * Example 9: Multi-image comparison
+ * Example 8: Multi-image comparison
  */
 function exampleMultiImage() {
   const ai = getAi();

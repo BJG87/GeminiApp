@@ -11,7 +11,7 @@
  * - File upload API to avoid large inline transfers
  * - Automatic retry with exponential backoff
  * - Clear error messages
- * - Job queue for processing multiple AI requests sequentially with concurrency control
+
  * 
  * @example Basic usage
  * const ai = StvpsAi.newInstance(apiKey);
@@ -50,33 +50,7 @@
  * chat.sendMessage('Hello');
  * chat.sendMessage('Tell me more');
  * 
- * @example Job Queue - IMPORTANT: Required Setup
- * // The library includes job queue functionality, but you MUST add this helper function
- * // to your own project (this allows the library to call your project's trigger functions):
- * 
- * function processJobs() {
- *   StvpsAi.JobQueue.processJobs();
- * }
- * 
- * // Then use the job queue:
- * StvpsAi.JobQueue.addJob({
- *   method: 'prompt',
- *   params: ['Analyze this text'],
- *   callbackFunctionName: 'handleResult'
- * });
- * 
- * function handleResult(result) {
- *   console.log('Job completed:', result);
- * }
- * 
- * // Set concurrency (how many jobs run simultaneously)
- * StvpsAi.JobQueue.setMaxConcurrentJobs(3); // Default is 1
- * 
- * // Check queue status
- * const status = StvpsAi.JobQueue.getQueueStatus();
- * console.log('Jobs queued:', status.queuedCount);
- * console.log('Jobs running:', status.runningCount);
- * 
+
  * RETURN TYPES:
  * -------------
  * All methods return:
@@ -1619,29 +1593,5 @@ var StvpsAi = {
   newInstance: newInstance,
   Error: StvpsAiError,
   ApiError: StvpsAiApiError,
-  ValidationError: StvpsAiValidationError,
-  JobQueue: {
-    // Core queue management
-    processJobs: processJobs,
-    addJob: addJob,
-    addJobs: addJobs,
-
-    // Configuration
-    setMaxConcurrentJobs: setMaxConcurrentJobs,
-    getMaxConcurrentJobs: getMaxConcurrentJobs,
-
-    // Trigger control
-    startProcessingJobs: startProcessingJobs,
-    stopProcessingJobs: stopProcessingJobs,
-
-    // Queue status and utilities
-    getQueueStatus: getQueueStatus,
-    clearJobQueue: clearJobQueue,
-    clearRunningJobs: clearRunningJobs,
-
-    // Failed jobs management
-    listFailedJobs: listFailedJobs,
-    clearFailedJobs: clearFailedJobs,
-    removeFailedJob: removeFailedJob
-  }
+  ValidationError: StvpsAiValidationError
 };
