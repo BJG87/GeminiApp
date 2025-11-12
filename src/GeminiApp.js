@@ -1388,6 +1388,7 @@ class _GeminiApp {
 
           // Exponential backoff
           const delay = Math.pow(2, attempt) * 1000;
+          console.error({ statusCode: statusCode, error: errorMessage })
           console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms...`);
           Utilities.sleep(delay);
           continue;
